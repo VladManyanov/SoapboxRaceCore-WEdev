@@ -130,8 +130,14 @@ public class LobbyBO {
 		if (redis && lobbys.isEmpty()) {
 			matchmakingBO.addPlayerToQueue(personaId, carClassHash, raceFilter, 1, searchStage);
 			System.out.println("### searchStage: " + searchStage);
+			int priorityMMTimeout = personaEntity.getPriorityMMTimeout();
 			if (searchStage == 2) {
-				lobbyKeepAliveBO.searchPriorityTimer(personaId, carClassHash, raceFilter, isSClassFilterActive, parameterBO.getIntParam("RACENOW_PRIORITYTIMER"));
+				if (priorityMMTimeout != 0) {
+					lobbyKeepAliveBO.searchPriorityTimer(personaId, carClassHash, raceFilter, isSClassFilterActive, priorityMMTimeout);
+				}
+				else {
+					joinFastLobby(personaId, carClassHash, raceFilter, isSClassFilterActive, 3); // Skip the Priority timeout
+				}
 			}
 		}
 //		else {

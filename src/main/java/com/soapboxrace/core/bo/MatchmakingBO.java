@@ -148,10 +148,53 @@ public class MatchmakingBO {
         return personaId;
     }
     
-    @Schedule(minute = "*/1", hour = "*", persistent = false)
+    // @Schedule(minute = "*/1", hour = "*", persistent = false)
     public void matchmakingWebStatus() {
-    	Long test = this.redisConnection.sync().hlen("matchmaking_queue"); // Get the count of Key-Value pairs (player entries) by "queue" hash
-        System.out.println("### Players searching on Race Now: " + test);
+    	Long playerCount = this.redisConnection.sync().hlen("matchmaking_queue"); // Get the count of Key-Value pairs (player entries) by "queue" hash
+        System.out.println("### Players searching on Race Now: " + playerCount);
+        
+        int SClassPlayers = 0;
+        int AClassPlayers = 0;
+        int BClassPlayers = 0;
+        int CClassPlayers = 0;
+        int DClassPlayers = 0;
+        int EClassPlayers = 0;
+        ScanIterator<KeyValue<String, String>> searchIterator = ScanIterator.hscan(this.redisConnection.sync(), "matchmaking_queue");
+
+        // Check the car class of all players in MM Queue
+        while (searchIterator.hasNext()) {
+        	KeyValue<String, String> keyValue = searchIterator.next();
+            String[] playerVehicleInfo = keyValue.getValue().split(",");
+            int playerCarClass = Integer.parseInt(playerVehicleInfo[0]);
+            int isAvailable = Integer.parseInt(playerVehicleInfo[2]);
+            if (isAvailable == 1) {
+            	switch (playerCarClass) {
+                case -2142411446:
+                	SClassPlayers++;
+                	break;
+                case -405837480:
+                	AClassPlayers++;
+                	break;
+                case -406473455:
+                	BClassPlayers++;
+                	break;
+                case 1866825865:
+                	CClassPlayers++;
+                	break;
+                case 415909161:
+                	DClassPlayers++;
+                	break;
+                case 872416321:
+                	EClassPlayers++;
+                	break;
+                }
+            }
+        }
+        if (playerCount > 0) {
+        	 System.out.println("### Players searching on Race Now, by classes: S[" + SClassPlayers + "], A[" + AClassPlayers + "], B[" + BClassPlayers + "],"
+             		+ " C[" + CClassPlayers + "], D[" + DClassPlayers + "], E[" + EClassPlayers + "]");
+        }
+   
         List<LobbyEntity> lobbiesList = lobbyDAO.findAllOpen();
         if (lobbiesList.isEmpty()) {
         	System.out.println("### No public lobbies is available yet.");

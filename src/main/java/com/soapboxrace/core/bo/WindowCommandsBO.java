@@ -336,6 +336,24 @@ public class WindowCommandsBO {
 				}
 				return null;
 			}
+			// Set MM Priority search timeout for persona
+			if (displayName.contains("/SEARCHTIMEOUT ")) {
+				int seconds = 0;
+				try {
+					seconds = Integer.parseInt(displayName.replaceFirst("/SEARCHTIMEOUT ", ""));
+		        } catch (NumberFormatException|ArrayIndexOutOfBoundsException ex) {
+		        	openFireSoapBoxCli.send(XmppChat.createSystemMessage("### Time value is invaild, try again."), personaId);
+		        	return null;
+		        }
+				if (seconds < 0 || seconds > 600) {
+					openFireSoapBoxCli.send(XmppChat.createSystemMessage("### Acceptable time values is from 0 to 600."), personaId);
+					return null;
+				}
+				personaSender.setPriorityMMTimeout(seconds * 1000); // Milliseconds
+				personaDAO.update(personaSender);
+				openFireSoapBoxCli.send(XmppChat.createSystemMessage("### Search timeout value has been saved."), personaId);
+				return null;
+			}
 		}
 
 		// default add-a-friend interaction

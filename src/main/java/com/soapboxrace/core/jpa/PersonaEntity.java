@@ -48,6 +48,7 @@ public class PersonaEntity {
 	private LocalDate dailyRaceDate;
 	private boolean isHidden; // Temporarily removed persona
 	private boolean ignoreRaces; // Permanent "Ignore the event after being declined on the search" switch
+	private int priorityMMTimeout; // Personal Priority Class Group search timeout
 
 	@ManyToOne
 	@JoinColumn(name = "USERID", referencedColumnName = "ID", foreignKey = @ForeignKey(name = "FK_PERSONA_USER"))
@@ -229,6 +230,14 @@ public class PersonaEntity {
 
 	public void setIgnoreRaces(boolean ignoreRaces) {
 		this.ignoreRaces = ignoreRaces;
+	}
+	
+	public int getPriorityMMTimeout() {
+		return priorityMMTimeout;
+	}
+
+	public void setPriorityMMTimeout(int priorityMMTimeout) {
+		this.priorityMMTimeout = priorityMMTimeout;
 	}
 
 }
