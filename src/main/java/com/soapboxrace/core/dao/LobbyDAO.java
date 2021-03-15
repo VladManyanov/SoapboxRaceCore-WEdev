@@ -33,12 +33,12 @@ public class LobbyDAO extends BaseDAO<LobbyEntity> {
 	}
 
 	// Search for Race Now, takes 3 tries, depending on car class and lobbies variety
-	public List<LobbyEntity> findAllMPLobbies(int carClassHash, int raceFilter, int searchStage) {
+	public List<LobbyEntity> findAllMPLobbies(int carClassHash, int raceFilter, int searchStage, boolean isSClassFilterActive) {
 		System.out.println("### findAllMPLobbies, searchStage: " + searchStage);
 		Date dateNow = new Date();
 		Date datePast = new Date(dateNow.getTime() - (parameterBO.getIntParam("LOBBY_TIME") - 8000)); // Don't count the last 8 seconds of lobby life-time
 		
-		TypedQuery<LobbyEntity> query = entityManager.createQuery(getSqlLobbySearch(raceFilter, searchStage, carClassHash), LobbyEntity.class);
+		TypedQuery<LobbyEntity> query = entityManager.createQuery(getSqlLobbySearch(raceFilter, searchStage, carClassHash, isSClassFilterActive), LobbyEntity.class);
 		query.setParameter("dateTime1", datePast);
 		query.setParameter("dateTime2", dateNow);
 		if (searchStage == 1) {
@@ -47,7 +47,7 @@ public class LobbyDAO extends BaseDAO<LobbyEntity> {
 		
 		if (query.getResultList().isEmpty() && searchStage == 1) {
 			System.out.println("### going to searchStage 2");
-			findAllMPLobbies(carClassHash, raceFilter, 2); 
+			findAllMPLobbies(carClassHash, raceFilter, 2, isSClassFilterActive); 
 			// 1 to 2 - Repeat the search without strict class restriction, to class groups priority
 			// 2 to 3 - Wait for priority timeout, and repeat the search for all existing lobbies
 			// 3 - No lobbies at all, wait for new lobbies on Queue MM
@@ -56,18 +56,18 @@ public class LobbyDAO extends BaseDAO<LobbyEntity> {
 		return query.getResultList();
 	}
 	
-	public String getSqlLobbySearch(int raceFilter, int searchStage, int carClassHash) {
+	public String getSqlLobbySearch(int raceFilter, int searchStage, int carClassHash, boolean isSClassFilterActive) {
 		StringBuilder searchQuery = new StringBuilder();
 		searchQuery.append("SELECT obj FROM LobbyEntity obj "); // SELECT command
 		searchQuery.append("WHERE obj.started = false AND (obj.lobbyDateTimeStart between :dateTime1 and :dateTime2) OR (obj.lobbyDateTimeStart = null)"); // Lobby should be available to search
 		searchQuery.append("AND obj.isPrivate = false AND obj.event.searchAvailable = true "); // Not private, and the event itself should be allowed for search
-		searchQuery.append(getSqlClassFilter(searchStage, carClassHash)); // Class restriction
+		searchQuery.append(getSqlClassFilter(searchStage, carClassHash, isSClassFilterActive)); // Class restriction
 		searchQuery.append(getSqlRaceFilter(raceFilter)); // Event type action
 		searchQuery.append("ORDER BY obj.lobbyDateTimeStart ASC "); // Order lobbies by start time
 		return searchQuery.toString();
 	}
 	
-	public String getSqlClassFilter(int searchStage, int carClassHash) {
+	public String getSqlClassFilter(int searchStage, int carClassHash, boolean isSClassFilterActive) {
 		String append = "";
 		switch (searchStage) {
 		case 1:
@@ -91,6 +91,9 @@ public class LobbyDAO extends BaseDAO<LobbyEntity> {
 			break;
 		case 3:
 			append = "AND obj.event.carClassHash = 607077938 ";
+			if (carClassHash == -2142411446 && isSClassFilterActive) { // Search for races, which is hosted by S-Class drivers
+				append = "AND obj.carClassHash = -2142411446 ";
+			}
 			break;
 		}
 		return append;

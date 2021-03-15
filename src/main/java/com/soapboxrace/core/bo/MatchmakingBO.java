@@ -134,11 +134,12 @@ public class MatchmakingBO {
             int playerCarClass = Integer.parseInt(playerVehicleInfo[0]);
             int playerRaceFilter = Integer.parseInt(playerVehicleInfo[1]);
             int searchStage = Integer.parseInt(playerVehicleInfo[3]);
+            System.out.println("### playerCarClass: " + Integer.parseInt(playerVehicleInfo[0]) + ", playerRaceFilter: " + Integer.parseInt(playerVehicleInfo[1]) + ", searchStage: " + Integer.parseInt(playerVehicleInfo[3]) + ", isAvailable: " + Integer.parseInt(playerVehicleInfo[2]) + " arrayLength: " + playerVehicleInfo.length);
             if (Integer.parseInt(playerVehicleInfo[2]) == 1 && isRaceFilterAllowed(playerRaceFilter, eventModeId) 
             		&& isSClassFilterAllowed(playerCarClass, hosterCarClass, carClass, isSClassFilterActive) 
             		&& isPriorityClassFilterAllowed(playerCarClass, carClass, hosterCarClass, searchStage)) {
                 personaId = Long.parseLong(keyValue.getKey());
-                String newPlayerVehicleInfo = playerCarClass + "," + playerRaceFilter + "," + 0; // This entrant is not available for new invites
+                String newPlayerVehicleInfo = playerCarClass + "," + playerRaceFilter + "," + 0 + "," + 0; // This entrant is not available for new invites
                 this.redisConnection.sync().hset("matchmaking_queue", keyValue.getKey(), newPlayerVehicleInfo);
                 // removePlayerFromQueue(personaId);
                 System.out.println("### getPlayerFromQueue FINAL");

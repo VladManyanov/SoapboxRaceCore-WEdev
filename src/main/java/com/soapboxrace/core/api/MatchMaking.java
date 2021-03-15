@@ -168,8 +168,8 @@ public class MatchMaking {
 			lobbyBO.deleteLobbyEntrant(activePersonaId, activeLobbyId);
 		}
 		LobbyEntity lobbyEntity = lobbyDAO.findById(activeLobbyId);
-		if (lobbyEntity != null && lobbyEntrantDAO.isLobbyEmpty(lobbyEntity)) { // Delete the empty lobby
-			System.out.println("### /leavelobby delete");
+		if (lobbyEntity != null && lobbyEntrantDAO.isLobbyEmpty(lobbyEntity) && !lobbyEntity.getIsPrivate()) { // Delete the empty lobby
+			System.out.println("### /leavelobby delete"); // However, private lobby will stay until the timeout
 			lobbyCountdownBO.endLobby(lobbyEntity);
 		}
 		tokenSessionBO.setActiveLobbyId(securityToken, 0L);
@@ -240,8 +240,8 @@ public class MatchMaking {
 	public String declineInvite(@HeaderParam("securityToken") String securityToken, @QueryParam("lobbyInviteId") Long lobbyInviteId) {
 		LobbyEntity lobbyEntity = lobbyDAO.findById(lobbyInviteId);
 		EventEntity eventEntity = eventDAO.findById(tokenSessionBO.getSearchEventId(securityToken));
-		if (lobbyEntity != null && lobbyEntrantDAO.isLobbyEmpty(lobbyEntity)) { // Delete the empty lobby
-			System.out.println("### /declineinvite delete");
+		if (lobbyEntity != null && lobbyEntrantDAO.isLobbyEmpty(lobbyEntity) && !lobbyEntity.getIsPrivate()) { // Delete the empty lobby
+			System.out.println("### /declineinvite delete"); // However, private lobby will stay until the timeout
 			lobbyCountdownBO.endLobby(lobbyEntity);
 		}
 		tokenSessionBO.setActiveLobbyId(securityToken, 0L);

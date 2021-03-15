@@ -105,7 +105,7 @@ public class LobbyBO {
 		PersonaEntity personaEntity = personaDao.findById(personaId);
 		boolean redis = parameterBO.getBoolParam("REDIS_ENABLE");
 		System.out.println("### joinFastLobby, searchStage: " + searchStage);
-		List<LobbyEntity> lobbys = lobbyDao.findAllMPLobbies(carClassHash, raceFilter, searchStage);
+		List<LobbyEntity> lobbys = lobbyDao.findAllMPLobbies(carClassHash, raceFilter, searchStage, isSClassFilterActive);
 		if (lobbys.isEmpty() && searchStage == 1) { // If class-restricted and class group search is not succeed, initiate Priority Class Group search
 			searchStage = 2;
 		}
@@ -208,12 +208,15 @@ public class LobbyBO {
 		lobbyEntity.setPersonaId(personaEntity.getPersonaId());
 		lobbyEntity.setIsReserved(false);
 		lobbyEntity.setLobbyDateTimeStart(null); // Don't count the time until any player gets the invite
+		if (isPrivate) { // But private lobby time is limited from the start
+			lobbyEntity.setLobbyDateTimeStart(new Date());
+		}
 		lobbyEntity.setCarClassHash(carClassHash);
 		lobbyEntity.setStarted(false);
 //		lobbyEntity.setCarDivision(carDivision);
 		lobbyDao.insert(lobbyEntity);
 
-		if (parameterBO.getBoolParam("REDIS_ENABLE")) { // Queue Matchmaking
+		if (parameterBO.getBoolParam("REDIS_ENABLE") && !isPrivate) { // Queue Matchmaking
 //			matchmakingBO.changePlayerCountInQueue(true); // Add the hoster to the queue player count, but not in the queue itself
 			int playersFounded = 1;
 			for (int i = 1; i <= eventMaxPlayers - 1; i++) { // Search a players for all of the event slots
@@ -225,7 +228,7 @@ public class LobbyBO {
 	            if (!queuePersonaId.equals(-1L) && !matchmakingBO.isEventIgnored(queuePersonaId, eventId)) {
 	            	 System.out.println("### Get the player THERE...");
 	                if (lobbyEntrantDAO.getPlayerCount(lobbyEntity) < eventMaxPlayers) {
-	                    sendJoinEvent(queuePersonaId, lobbyEntity, eventId);
+	                    sendJoinEvent(queuePersonaId, lobbyEntity, eventId, false);
 	                    playersFounded++;
 	                    System.out.println("### Get the player DONE");
 	                }
@@ -234,7 +237,7 @@ public class LobbyBO {
 			if (playersFounded > 1) {
 				System.out.println("### Get the player ACTIVE");
 //				matchmakingBO.changePlayerCountInQueue(false); // Remove the hoster from queue player count
-            	sendJoinEvent(personaId, lobbyEntity, eventId);
+            	sendJoinEvent(personaId, lobbyEntity, eventId, false);
             	setIsLobbyReserved(lobbyEntity, true);
             	if (!tempCreated) {
             		lobbyEntity.setLobbyDateTimeStart(new Date());
@@ -243,8 +246,9 @@ public class LobbyBO {
             	}
             }
 		}
-		else {
-			sendJoinEvent(personaId, lobbyEntity, eventId);
+		else { // Private lobby
+			sendJoinEvent(personaId, lobbyEntity, eventId, true);
+			lobbyCountdownBO.scheduleLobbyStart(lobbyEntity);
 		}
 		// This lobby has been created again, when player got a invite, but the lobby itself is not exists anymore (e.g other player has declined the invite)
 		if (tempCreated) { 
@@ -296,7 +300,7 @@ public class LobbyBO {
 
 		// System.out.println("MM RANDOM FINAL Time: " + LocalDateTime.now());
 		openFireSoapBoxCli.send(XmppChat.createSystemMessage("### New MP race is created."), personaId);
-		sendJoinEvent(personaId, lobbyEntity, eventEntity.getId());
+		sendJoinEvent(personaId, lobbyEntity, eventEntity.getId(), false);
 		setIsLobbyReserved(lobbyEntity, true);
 		lobbyCountdownBO.scheduleLobbyStart(lobbyEntity);
 		lobbyDao.update(lobbyEntity);
@@ -354,18 +358,18 @@ public class LobbyBO {
 		}
 		if (lobbyEntity != null) {
 //			System.out.println("MM END Time: " + System.currentTimeMillis());
-			sendJoinEvent(personaId, lobbyEntity, eventId);
+			sendJoinEvent(personaId, lobbyEntity, eventId, false);
 		}
 		if (lobbyEntity == null && lobbyEntityEmpty != null) { // If all lobbies on the search is empty, player will got the first created empty lobby
 //			System.out.println("MM END Time: " + System.currentTimeMillis());
 			
 			System.out.println("second choice for " + lobbyEntityEmpty.getPersonaId());
-			sendJoinEvent(personaId, lobbyEntityEmpty, eventId);
+			sendJoinEvent(personaId, lobbyEntityEmpty, eventId, false);
 			Long hosterPersonaId = lobbyEntityEmpty.getPersonaId();
 			if (!personaId.equals(hosterPersonaId)) {
 				System.out.println("callbackRequest for " + hosterPersonaId);
 				setIsLobbyReserved(lobbyEntityEmpty, true);
-				sendJoinEvent(hosterPersonaId, lobbyEntityEmpty, eventId); // Send the join request for race hoster
+				sendJoinEvent(hosterPersonaId, lobbyEntityEmpty, eventId, false); // Send the join request for race hoster
 //				matchmakingBO.changePlayerCountInQueue(false); // Remove the hoster from queue player count
 				lobbyEntityEmpty.setLobbyDateTimeStart(new Date());
 				lobbyDao.update(lobbyEntityEmpty);
@@ -384,13 +388,16 @@ public class LobbyBO {
 		return false;
 	}
 
-	private void sendJoinEvent(Long personaId, LobbyEntity lobbyEntity, int eventId) {
+	private void sendJoinEvent(Long personaId, LobbyEntity lobbyEntity, int eventId, boolean isPrivate) {
 		System.out.println("sendJoinEvent for " + personaId);
 		Long lobbyId = lobbyEntity.getId();
 
 		XMPP_LobbyInviteType xMPP_LobbyInviteType = new XMPP_LobbyInviteType();
 		xMPP_LobbyInviteType.setEventId(eventId);
 		xMPP_LobbyInviteType.setLobbyInviteId(lobbyId);
+		if (isPrivate) { // Increase the invite waiting time for hoster
+			xMPP_LobbyInviteType.setInviteLifetimeInMilliseconds(parameterBO.getIntParam("LOBBY_TIME").longValue() / 2);
+		}
 
 		tokenSessionBO.setSearchEventId(personaId, eventId);
 		XmppLobby xmppLobby = new XmppLobby(personaId, openFireSoapBoxCli);
