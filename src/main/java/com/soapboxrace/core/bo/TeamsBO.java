@@ -167,6 +167,7 @@ public class TeamsBO {
 	// Basic 1-ball team race, based on racers ranks (they should be correct on DB...), win 1 min timeout
 	// The fastest racer of his team will bring a win on this race, depending on opponent's teams position - Hypercycle
 	// carClass 0 = open races for all classes
+	// FIXME Can be done better
 	public void teamAccoladesBasic(Long eventSessionId) {
 		if (parameterBO.getIntParam("TEAM_CURRENTSEASON") > 0) {
 			try {
@@ -197,16 +198,18 @@ public class TeamsBO {
 				for (EventDataEntity racer : eventDataDao.getRacersRanked(eventSessionId)) {
 					System.out.println("### TeamsWinner debug: " + racer.getPersonaId() + ", session: " + eventSessionId);
 					PersonaEntity racerEntity = personaDao.findById(racer.getPersonaId());
+					Long racerPersonaId = racer.getPersonaId();
 					TeamsEntity racerTeamEntity = racerEntity.getTeam();
 					if (racerTeamEntity != null && teamWinner == null) {
-						System.out.println("### TeamsWinner debugTeamIs: " + racer.getPersonaId() + ", session: " + eventSessionId);
+						System.out.println("### TeamsWinner debugTeamIs: " + racerPersonaId + ", session: " + eventSessionId);
 						Long racerTeamId = racerTeamEntity.getTeamId();
 						if ((racerTeamId == team1 || racerTeamId == team2)) {
-							System.out.println("### TeamsWinner debugTeamOn: " + racer.getPersonaId() + ", session: " + eventSessionId);
-							OwnedCarTrans defaultCar = personaBO.getDefaultCar(racer.getPersonaId());
-							System.out.println("### TeamsWinner debugCar: " + defaultCar.getCustomCar().getCarClassHash() + " " + targetCarClass + " " + racer.getPersonaId() + ", session: " + eventSessionId);
-							if (defaultCar.getCustomCar().getCarClassHash() == targetCarClass || targetCarClass == 0) {
-								System.out.println("### TeamsWinner debugWinner: " + racer.getPersonaId() + ", session: " + eventSessionId);
+							System.out.println("### TeamsWinner debugTeamOn: " + racerPersonaId + ", session: " + eventSessionId);
+							OwnedCarTrans defaultCar = personaBO.getDefaultCar(racerPersonaId);
+							int playerCarHash = defaultCar.getCustomCar().getCarClassHash();
+							System.out.println("### TeamsWinner debugCar: " + playerCarHash + " " + targetCarClass + " " + racerPersonaId + ", session: " + eventSessionId);
+							if ((playerCarHash == targetCarClass || targetCarClass == 0) && isPlayerCarAllowed(playerCarHash)) {
+								System.out.println("### TeamsWinner debugWinner: " + racerPersonaId + ", session: " + eventSessionId);
 								teamWinner = racerTeamId;
 								eventSessionEntity.setTeamWinner(racerTeamId);
 								eventSessionDao.update(eventSessionEntity);
