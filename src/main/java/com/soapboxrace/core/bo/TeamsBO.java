@@ -32,6 +32,7 @@ import com.soapboxrace.core.jpa.TeamsEntity;
 import com.soapboxrace.core.jpa.UserEntity;
 import com.soapboxrace.core.xmpp.OpenFireSoapBoxCli;
 import com.soapboxrace.core.xmpp.XmppChat;
+import com.soapboxrace.jaxb.http.CustomCarTrans;
 import com.soapboxrace.jaxb.http.OwnedCarTrans;
 
 @Stateless
@@ -205,10 +206,11 @@ public class TeamsBO {
 						Long racerTeamId = racerTeamEntity.getTeamId();
 						if ((racerTeamId == team1 || racerTeamId == team2)) {
 							System.out.println("### TeamsWinner debugTeamOn: " + racerPersonaId + ", session: " + eventSessionId);
-							OwnedCarTrans defaultCar = personaBO.getDefaultCar(racerPersonaId);
-							int playerCarHash = defaultCar.getCustomCar().getPhysicsProfileHash();
-							System.out.println("### TeamsWinner debugCar: " + playerCarHash + " " + targetCarClass + " " + racerPersonaId + ", session: " + eventSessionId);
-							if ((playerCarHash == targetCarClass || targetCarClass == 0) && isPlayerCarAllowed(playerCarHash)) {
+							CustomCarTrans customCar = personaBO.getDefaultCar(racerPersonaId).getCustomCar();
+							int playerCarHash = customCar.getCarClassHash();
+							int playerCarPhysicsHash = customCar.getPhysicsProfileHash();
+							System.out.println("### TeamsWinner debugCar: " + playerCarHash + " " + targetCarClass + " " + racerPersonaId + ", physicsHash: " + playerCarPhysicsHash + ", session: " + eventSessionId);
+							if ((playerCarHash == targetCarClass || targetCarClass == 0) && isPlayerCarAllowed(playerCarPhysicsHash)) {
 								System.out.println("### TeamsWinner debugWinner: " + racerPersonaId + ", session: " + eventSessionId);
 								teamWinner = racerTeamId;
 								eventSessionEntity.setTeamWinner(racerTeamId);

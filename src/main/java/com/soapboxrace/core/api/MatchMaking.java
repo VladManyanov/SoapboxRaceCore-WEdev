@@ -147,11 +147,9 @@ public class MatchMaking {
 		Long activePersonaId = tokenSessionBO.getActivePersonaId(securityToken);
 		matchmakingBO.removePlayerFromQueue(activePersonaId);
 		LobbyEntity lobbyEntity = lobbyDAO.findByHosterPersona(activePersonaId);
-		if (lobbyEntity != null) {
-			if (lobbyEntrantDAO.isLobbyEmpty(lobbyEntity)) { // Delete the empty lobby
-				System.out.println("### /leavequeue delete");
-				lobbyCountdownBO.endLobby(lobbyEntity);
-			}
+		if (lobbyEntity != null && lobbyEntrantDAO.isLobbyEmpty(lobbyEntity)) { // Delete the empty lobby
+			System.out.println("### /leavequeue delete");
+			lobbyCountdownBO.endLobby(lobbyEntity);
 		}
 		tokenSessionBO.setActiveLobbyId(securityToken, 0L);
 		return "";
