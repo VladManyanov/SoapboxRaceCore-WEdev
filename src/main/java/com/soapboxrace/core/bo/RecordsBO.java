@@ -9,6 +9,7 @@ import javax.ejb.Schedule;
 import javax.ejb.Stateless;
 
 import com.soapboxrace.core.bo.util.DiscordWebhook;
+import com.soapboxrace.core.bo.util.EventModeType;
 import com.soapboxrace.core.bo.util.TimeReadConverter;
 import com.soapboxrace.core.dao.CarClassesDAO;
 import com.soapboxrace.core.dao.CustomCarDAO;
@@ -113,7 +114,7 @@ public class RecordsBO {
 			carClassLetter = eventResultBO.getCarClassLetter(carClassHash);
 			chatIndicator = carClassLetter;
 		}
-		if (eventMode == 9 || eventMode == 4) { // Sprints and Circuits
+		if (EventModeType.CIRCUIT.getId() == eventMode || EventModeType.SPRINT.getId() == eventMode) { 
 			chatIndicator = modeSymbol + "/" + carClassLetter;
 		}
 		

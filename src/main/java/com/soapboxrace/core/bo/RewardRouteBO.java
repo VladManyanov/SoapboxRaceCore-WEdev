@@ -3,6 +3,7 @@ package com.soapboxrace.core.bo;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 
+import com.soapboxrace.core.bo.util.EventModeType;
 import com.soapboxrace.core.bo.util.RewardVO;
 import com.soapboxrace.core.bo.PersonaBO;
 import com.soapboxrace.core.dao.PersonaDAO;
@@ -10,7 +11,6 @@ import com.soapboxrace.core.jpa.EventEntity;
 import com.soapboxrace.core.jpa.EventSessionEntity;
 import com.soapboxrace.core.jpa.PersonaEntity;
 import com.soapboxrace.core.jpa.SkillModRewardType;
-import com.soapboxrace.core.jpa.TreasureHuntEntity;
 import com.soapboxrace.jaxb.http.Accolades;
 import com.soapboxrace.jaxb.http.RouteArbitrationPacket;
 import com.soapboxrace.jaxb.http.ArrayOfRouteEntrantResult;
@@ -40,7 +40,7 @@ public class RewardRouteBO extends RewardBO {
 		EventEntity eventEntity = eventSessionEntity.getEvent();
 		
 		// Interceptor events doesn't have a legit time checks due to force time limits
-		if (eventEntity.getEventModeId() != 100 && !legitRaceBO.isLegit(activePersonaId, routeArbitrationPacket, eventSessionEntity, isSingle)) {
+		if (EventModeType.INTERCEPTOR.getId() != eventEntity.getEventModeId() && !legitRaceBO.isLegit(activePersonaId, routeArbitrationPacket, eventSessionEntity, isSingle)) {
 			return new Accolades();
 		}
 		

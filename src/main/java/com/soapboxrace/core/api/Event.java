@@ -20,12 +20,12 @@ import com.soapboxrace.core.bo.EventResultBO;
 import com.soapboxrace.core.bo.FriendBO;
 import com.soapboxrace.core.bo.MatchmakingBO;
 import com.soapboxrace.core.bo.TokenSessionBO;
+import com.soapboxrace.core.bo.util.EventModeType;
 import com.soapboxrace.core.dao.EventDataDAO;
 import com.soapboxrace.core.dao.PersonaDAO;
 import com.soapboxrace.core.dao.PersonaPresenceDAO;
 import com.soapboxrace.core.jpa.EventDataEntity;
 import com.soapboxrace.core.jpa.EventEntity;
-import com.soapboxrace.core.jpa.EventMode;
 import com.soapboxrace.core.jpa.EventSessionEntity;
 import com.soapboxrace.core.jpa.PersonaPresenceEntity;
 import com.soapboxrace.core.xmpp.OpenFireSoapBoxCli;
@@ -94,15 +94,18 @@ public class Event {
 		eventDataEntity.setServerEventDuration(0);
 		eventDataDAO.update(eventDataEntity);
 		
-		if (eventMode == 4 || eventMode == 9 || eventMode == 100) { // Circuit & Sprint, and Interceptor
+		switch (EventModeType.valueOf(eventMode)) {
+		case CIRCUIT: case SPRINT: case INTERCEPTOR:
 			RouteArbitrationPacket routeArbitrationPacket = new RouteArbitrationPacket();
 			eventBO.sendXmppPacketRoute(eventSessionId, activePersonaId, routeArbitrationPacket, 0, false, false);
-		}
-		if (eventMode == 24) { // Team Escape
+			break;
+		case TEAM_ESCAPE:
 			eventBO.sendXmppPacketTEAbort(eventSessionId, activePersonaId);
-		}
-		if (eventMode == 19) { // Drag
+			break;
+		case DRAG:
 			eventBO.sendXmppPacketDragAbort(eventSessionId, activePersonaId);
+			break;
+		default: break;
 		}
 		matchmakingBO.resetIgnoredEvents(activePersonaId);
 		return "";
@@ -125,7 +128,7 @@ public class Event {
 		personaPresenceDAO.updateCurrentEvent(activePersonaId, eventDataId, eventModeId, eventSessionId, presence);
 		friendBO.sendXmppPresenceToAllFriends(personaDAO.findById(activePersonaId), presence);
 		
-		if (timeLimit != 0 && eventModeId != 24) { // Team Escape have it's own timeout action
+		if (timeLimit != 0 && EventModeType.TEAM_ESCAPE.getId() != eventModeId) { // Team Escape have it's own timeout action
 			eventResultBO.timeLimitTimer(eventSessionId, timeLimit);
 		}
 		return "";
@@ -140,24 +143,22 @@ public class Event {
 		Long eventEnded = System.currentTimeMillis(); // Server-side event timer stop
 		EventSessionEntity eventSessionEntity = eventBO.findEventSessionById(eventSessionId);
 		EventEntity event = eventSessionEntity.getEvent();
-		EventMode eventMode = EventMode.fromId(event.getEventModeId());
+		int eventMode = event.getEventModeId();
 		Long activePersonaId = tokenBO.getActivePersonaId(securityToken);
 
-		switch (eventMode) {
-		case CIRCUIT:
-		case SPRINT:
-		case INTERCEPTOR_MP:
+		switch (EventModeType.valueOf(eventMode)) {
+		case CIRCUIT: case SPRINT: case INTERCEPTOR:
 			RouteArbitrationPacket routeArbitrationPacket = JAXBUtility.unMarshal(arbitrationXml, RouteArbitrationPacket.class);
 			return eventResultBO.handleRaceEnd(eventSessionEntity, activePersonaId, routeArbitrationPacket, eventEnded);
 		case DRAG:
 			DragArbitrationPacket dragArbitrationPacket = JAXBUtility.unMarshal(arbitrationXml, DragArbitrationPacket.class);
 			return eventResultBO.handleDragEnd(eventSessionEntity, activePersonaId, dragArbitrationPacket, eventEnded);
-		case MEETINGPLACE:
+		case MEETING_PLACE:
 			break;
-		case PURSUIT_MP:
+		case TEAM_ESCAPE:
 			TeamEscapeArbitrationPacket teamEscapeArbitrationPacket = JAXBUtility.unMarshal(arbitrationXml, TeamEscapeArbitrationPacket.class);
 			return eventResultBO.handleTeamEscapeEnd(eventSessionEntity, activePersonaId, teamEscapeArbitrationPacket, eventEnded);
-		case PURSUIT_SP:
+		case PURSUIT_OUTRUN:
 			PursuitArbitrationPacket pursuitArbitrationPacket = JAXBUtility.unMarshal(arbitrationXml, PursuitArbitrationPacket.class);
 			return eventResultBO.handlePursuitEnd(eventSessionEntity, activePersonaId, pursuitArbitrationPacket, false, eventEnded);
 		default:

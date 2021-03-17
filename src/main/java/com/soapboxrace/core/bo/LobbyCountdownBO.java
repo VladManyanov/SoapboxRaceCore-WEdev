@@ -17,6 +17,7 @@ import javax.ejb.Timer;
 import javax.ejb.TimerConfig;
 import javax.ejb.TimerService;
 
+import com.soapboxrace.core.bo.util.EventModeType;
 import com.soapboxrace.core.bo.util.StringListConverter;
 import com.soapboxrace.core.bo.util.TimeReadConverter;
 import com.soapboxrace.core.dao.EventSessionDAO;
@@ -147,7 +148,7 @@ public class LobbyCountdownBO {
 		String udpRaceIp = parameterBO.getStrParam("UDP_RACE_IP");
 		eventSessionDao.insert(eventSessionEntity);
 		
-		boolean isInterceptorEvent = eventEntity.getEventModeId() == 100 ? true : false;
+		boolean isInterceptorEvent = EventModeType.INTERCEPTOR.equals(eventEntity.getEventModeId()) ? true : false;
 		String timeLimit = "!pls fix!";
 		List<Long> personaCops = new ArrayList<Long>();
 		List<Long> personaRacers = new ArrayList<Long>();
@@ -288,6 +289,22 @@ public class LobbyCountdownBO {
 	public void endLobby(LobbyEntity lobbyEntity) {
 		lobbyEntrantDAO.deleteByLobby(lobbyEntity);
 		lobbyDao.delete(lobbyEntity);
+	}
+	
+	// Delete the empty lobby
+	public void shutdownLobby(LobbyEntity lobbyEntity) {
+		if (lobbyEntity != null && lobbyEntrantDAO.isLobbyEmpty(lobbyEntity)) { 
+			endLobby(lobbyEntity);
+			System.out.println("### shutdownLobby");
+		}
+	}
+	
+	// Delete the empty lobby; however private lobby will stay until the timeout
+	public void shutdownLobbyAlt(LobbyEntity lobbyEntity) {
+		if (lobbyEntity != null && lobbyEntrantDAO.isLobbyEmpty(lobbyEntity) && !lobbyEntity.getIsPrivate()) { 
+			System.out.println("### shutdownLobbyAlt"); 
+			endLobby(lobbyEntity);
+		}
 	}
 	
 }

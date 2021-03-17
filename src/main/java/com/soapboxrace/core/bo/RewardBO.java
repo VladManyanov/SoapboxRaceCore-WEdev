@@ -6,6 +6,7 @@ import javax.ejb.EJB;
 import javax.ejb.Stateless;
 
 import com.soapboxrace.core.bo.util.AchievementType;
+import com.soapboxrace.core.bo.util.EventModeType;
 import com.soapboxrace.core.bo.util.RewardVO;
 import com.soapboxrace.core.dao.AchievementRankDAO;
 import com.soapboxrace.core.dao.AchievementStateDAO;
@@ -387,7 +388,7 @@ public class RewardBO {
 	public void setRankReward(EventEntity eventEntity, ArbitrationPacket routeArbitrationPacket, RewardVO rewardVO) {
 		float rankRepMultiplier = 0f;
 		float rankCashMultiplier = 0f;
-		if (eventEntity.getEventModeId() == 24) { // All Team Escape finishers will get highest reward
+		if (EventModeType.TEAM_ESCAPE.getId() == eventEntity.getEventModeId()) { // All Team Escape finishers will get highest reward
 			rankRepMultiplier = eventEntity.getRank1RepMultiplier();
 			rankCashMultiplier = eventEntity.getRank1CashMultiplier();
 		}

@@ -11,10 +11,11 @@ import javax.persistence.Query;
 import javax.persistence.TypedQuery;
 
 import com.soapboxrace.core.bo.ParameterBO;
+import com.soapboxrace.core.bo.util.CarClassType;
+import com.soapboxrace.core.bo.util.EventModeType;
 import com.soapboxrace.core.dao.util.BaseDAO;
 import com.soapboxrace.core.jpa.EventEntity;
 import com.soapboxrace.core.jpa.LobbyEntity;
-import com.soapboxrace.core.jpa.RewardDropEntity;
 
 @Stateless
 public class LobbyDAO extends BaseDAO<LobbyEntity> {
@@ -33,17 +34,20 @@ public class LobbyDAO extends BaseDAO<LobbyEntity> {
 	}
 
 	// Search for Race Now, takes 3 tries, depending on car class and lobbies variety
+	// Note: that createQuery action takes 7 ms just to fetch
 	public List<LobbyEntity> findAllMPLobbies(int carClassHash, int raceFilter, int searchStage, boolean isSClassFilterActive) {
 		System.out.println("### findAllMPLobbies, searchStage: " + searchStage);
 		Date dateNow = new Date();
 		Date datePast = new Date(dateNow.getTime() - (parameterBO.getIntParam("LOBBY_TIME") - 8000)); // Don't count the last 8 seconds of lobby life-time
 		
 		TypedQuery<LobbyEntity> query = entityManager.createQuery(getSqlLobbySearch(raceFilter, searchStage, carClassHash, isSClassFilterActive), LobbyEntity.class);
+		System.out.println("### findAllMPLobbies, query prepare end");
 		query.setParameter("dateTime1", datePast);
 		query.setParameter("dateTime2", dateNow);
 		if (searchStage == 1) {
 			query.setParameter("carClassHash", carClassHash); // carClassHash will be requested only when finding class-restricted races
 		}
+		System.out.println("### findAllMPLobbies, prepare");
 		
 		if (query.getResultList().isEmpty() && searchStage == 1) {
 			System.out.println("### going to searchStage 2");
@@ -58,66 +62,86 @@ public class LobbyDAO extends BaseDAO<LobbyEntity> {
 	
 	public String getSqlLobbySearch(int raceFilter, int searchStage, int carClassHash, boolean isSClassFilterActive) {
 		StringBuilder searchQuery = new StringBuilder();
+		System.out.println("### findAllMPLobbies, getSqlLobbySearch");
 		searchQuery.append("SELECT obj FROM LobbyEntity obj "); // SELECT command
 		searchQuery.append("WHERE obj.started = false AND (obj.lobbyDateTimeStart between :dateTime1 and :dateTime2) OR (obj.lobbyDateTimeStart = null)"); // Lobby should be available to search
 		searchQuery.append("AND obj.isPrivate = false AND obj.event.searchAvailable = true "); // Not private, and the event itself should be allowed for search
 		searchQuery.append(getSqlClassFilter(searchStage, carClassHash, isSClassFilterActive)); // Class restriction
-		searchQuery.append(getSqlRaceFilter(raceFilter)); // Event type action
+		searchQuery.append(getSqlRaceFilter(raceFilter, carClassHash)); // Event type action
 		searchQuery.append("ORDER BY obj.lobbyDateTimeStart ASC "); // Order lobbies by start time
+		System.out.println("### findAllMPLobbies, getSqlLobbySearch End");
 		return searchQuery.toString();
 	}
 	
 	public String getSqlClassFilter(int searchStage, int carClassHash, boolean isSClassFilterActive) {
 		String append = "";
-		switch (searchStage) {
-		case 1:
-			append = "AND obj.event.carClassHash = :carClassHash ";
-			break;
-		case 2: // TODO This one could be re-worked
-			switch (carClassHash) {
-			case -2142411446: // S Class group
-				append = "AND obj.event.carClassHash = -2142411446 ";
+		int SClassInt = CarClassType.S_CLASS.getId();
+		if (carClassHash != CarClassType.MISC.getId()) { // If player wants to drive Drift-Spec or Traffic car, he just should get open events
+			switch (searchStage) {
+			case 1:
+				append = "AND obj.event.carClassHash = :carClassHash ";
 				break;
-			case -405837480:
-			case -406473455: // A-B Classes group
-				append = "AND (obj.event.carClassHash = -405837480) OR (obj.event.carClassHash = -406473455) ";
+			case 2: 
+				switch (CarClassType.valueOf(carClassHash)) {
+				case S_CLASS: // S Class group
+					append = "AND obj.event.carClassHash = " + SClassInt + " ";
+					break;
+				case A_CLASS:
+				case B_CLASS: // A-B Classes group
+					append = "AND (obj.event.carClassHash = " + CarClassType.A_CLASS.getId() + ") OR (obj.event.carClassHash = " + CarClassType.B_CLASS.getId() + ") ";
+					break;
+				case C_CLASS:
+				case D_CLASS:
+				case E_CLASS: // C-D-E Classes group
+					append = "AND (obj.event.carClassHash = " + CarClassType.C_CLASS.getId() + ") OR (obj.event.carClassHash = " + CarClassType.D_CLASS.getId() +
+					") OR (obj.event.carClassHash = " + CarClassType.E_CLASS.getId() + ") ";
+					break;
+				default:
+					break;
+				}
 				break;
-			case 1866825865:
-			case 415909161:
-			case 872416321: // C-D-E Classes group
-				append = "AND (obj.event.carClassHash = 1866825865) OR (obj.event.carClassHash = 415909161) OR (obj.event.carClassHash = 872416321) ";
+			case 3:
+				append = "AND obj.event.carClassHash = " + CarClassType.OPEN_CLASS.getId() + " ";
+				if (carClassHash == SClassInt && isSClassFilterActive) { // Search for races, which is hosted by S-Class drivers
+					append = "AND obj.carClassHash = " + SClassInt + " ";
+				}
 				break;
 			}
-			break;
-		case 3:
-			append = "AND obj.event.carClassHash = 607077938 ";
-			if (carClassHash == -2142411446 && isSClassFilterActive) { // Search for races, which is hosted by S-Class drivers
-				append = "AND obj.carClassHash = -2142411446 ";
-			}
-			break;
 		}
+		else {
+			append = "AND obj.event.carClassHash = " + CarClassType.OPEN_CLASS.getId() + " ";
+		}
+		System.out.println("### findAllMPLobbies, getSqlClassFilter");
 		return append;
 	}
 	
-	public String getSqlRaceFilter(int raceFilter) {
+	public String getSqlRaceFilter(int raceFilter, int carClassHash) {
 		String append = "";
-		switch (raceFilter) {
-		case 1: // Sprint & Circuit
-			append = "AND (obj.event.eventModeId = 4 or obj.event.eventModeId = 9) ";
-			break;
-		case 2: // Drag
-			append = "AND obj.event.eventModeId = 19 ";
-			break;
-		case 3: // All Races
-			append = "AND (obj.event.eventModeId = 4 or obj.event.eventModeId = 9 or obj.event.eventModeId = 19) ";
-			break;
-		case 4: // Team Escape
-			append = "AND (obj.event.eventModeId = 24 or obj.event.eventModeId = 100) ";
-			break;
-		default: // No filter
-			append = "";
-			break;
+		if (carClassHash != CarClassType.MISC.getId()) { // If player wants to drive Drift-Spec or Traffic car, he just should avoid Drag events
+			switch (raceFilter) {
+			case 1: // Sprint & Circuit
+				append = "AND (obj.event.eventModeId = " + EventModeType.SPRINT.getId() + " or obj.event.eventModeId = " + EventModeType.CIRCUIT.getId() + ") ";
+				break;
+			case 2: // Drag
+				append = "AND obj.event.eventModeId = " + EventModeType.DRAG.getId() + " ";
+				break;
+			case 3: // All Races
+				append = "AND (obj.event.eventModeId = " + EventModeType.SPRINT.getId() + " or obj.event.eventModeId = " + EventModeType.CIRCUIT.getId() + 
+				" or obj.event.eventModeId = " + EventModeType.DRAG.getId() + ") ";
+				break;
+			case 4: // Team Escape
+				append = "AND (obj.event.eventModeId = " + EventModeType.TEAM_ESCAPE.getId() + " or obj.event.eventModeId = " 
+				+ EventModeType.INTERCEPTOR.getId() + ") ";
+				break;
+			default: // No filter
+				append = "";
+				break;
+			}
 		}
+		else {
+			append = "AND obj.event.eventModeId <> " + EventModeType.DRAG.getId() + " ";
+		}
+		System.out.println("### findAllMPLobbies, getSqlRaceFilter");
 		return append;
 	}
 	

@@ -5,6 +5,7 @@ import javax.ejb.Stateless;
 
 import com.soapboxrace.core.bo.util.CarBrandsList;
 import com.soapboxrace.core.bo.util.DiscordWebhook;
+import com.soapboxrace.core.bo.util.EventModeType;
 import com.soapboxrace.core.bo.util.StringListConverter;
 import com.soapboxrace.core.dao.CarClassesDAO;
 import com.soapboxrace.core.dao.CustomCarDAO;
@@ -116,7 +117,7 @@ public class EventResultRouteBO {
 		EventMissionsEntity eventMissionsEntity = eventMissionsDAO.getEventMission(eventEntity);
 		boolean isMission = eventMissionsEntity != null ? true : false;
 		
-		boolean isInterceptorEvent = eventEntity.getEventModeId() == 100 ? true : false;
+		boolean isInterceptorEvent = EventModeType.INTERCEPTOR.getId() == eventEntity.getEventModeId() ? true : false;
 		Long isWinnerPresented = eventSessionEntity.getPersonaWinner();
 		boolean isCopsFailed = eventSessionEntity.isCopsFailed(); // Interceptor events only
 		

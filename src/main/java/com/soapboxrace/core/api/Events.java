@@ -17,6 +17,7 @@ import com.soapboxrace.core.bo.MatchmakingBO;
 import com.soapboxrace.core.bo.ParameterBO;
 import com.soapboxrace.core.bo.PersonaBO;
 import com.soapboxrace.core.bo.TokenSessionBO;
+import com.soapboxrace.core.bo.util.EventModeType;
 import com.soapboxrace.core.dao.CarClassesDAO;
 import com.soapboxrace.core.dao.PersonaPresenceDAO;
 import com.soapboxrace.core.jpa.CarClassesEntity;
@@ -87,7 +88,7 @@ public class Events {
 				eventEntity.setLocked(true);
 			}
 			// If player drives a AI or Drift-Spec car, he will be unable to play Drag events
-			if (!isLockedAlready && eventEntity.getEventModeId() == 19 && (carClassHash == 0 || carClassHash == 1337)) {
+			if (!isLockedAlready && EventModeType.DRAG.getId() == eventEntity.getEventModeId() && (carClassHash == 0 || carClassHash == 1337)) {
 				isLockedAlready = true;
 				eventEntity.setLocked(true);
 			}

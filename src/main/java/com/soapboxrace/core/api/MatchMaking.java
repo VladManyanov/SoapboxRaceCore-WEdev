@@ -113,7 +113,6 @@ public class MatchMaking {
 			openFireSoapBoxCli.send(XmppChat.createSystemMessage("### S-Class cars matchmaking is separate."), activePersonaId);
 		}
 		CarClassesEntity carClassesEntity = carClassesDAO.findByHash(customCar.getPhysicsProfileHash());
-//		lobbyBO.joinFastLobby(securityToken, activePersonaId, defaultCar.getCustomCar().getCarClassHash(), lobbyBO.carDivision(defaultCar.getCustomCar().getCarClassHash()), defaultCar.getCustomCar().getRaceFilter());
 		if (!carClassesEntity.getQuickRaceAllowed()) {
 			openFireSoapBoxCli.send(XmppChat.createSystemMessage("### You cannot join to racing on this vehicle."), activePersonaId);
 			throw new EngineException(EngineExceptionCode.GameLocked, false);
@@ -147,10 +146,8 @@ public class MatchMaking {
 		Long activePersonaId = tokenSessionBO.getActivePersonaId(securityToken);
 		matchmakingBO.removePlayerFromQueue(activePersonaId);
 		LobbyEntity lobbyEntity = lobbyDAO.findByHosterPersona(activePersonaId);
-		if (lobbyEntity != null && lobbyEntrantDAO.isLobbyEmpty(lobbyEntity)) { // Delete the empty lobby
-			System.out.println("### /leavequeue delete");
-			lobbyCountdownBO.endLobby(lobbyEntity);
-		}
+		lobbyCountdownBO.shutdownLobby(lobbyEntity);
+		System.out.println("### /leavequeue");
 		tokenSessionBO.setActiveLobbyId(securityToken, 0L);
 		return "";
 	}
@@ -166,10 +163,7 @@ public class MatchMaking {
 			lobbyBO.deleteLobbyEntrant(activePersonaId, activeLobbyId);
 		}
 		LobbyEntity lobbyEntity = lobbyDAO.findById(activeLobbyId);
-		if (lobbyEntity != null && lobbyEntrantDAO.isLobbyEmpty(lobbyEntity) && !lobbyEntity.getIsPrivate()) { // Delete the empty lobby
-			System.out.println("### /leavelobby delete"); // However, private lobby will stay until the timeout
-			lobbyCountdownBO.endLobby(lobbyEntity);
-		}
+		lobbyCountdownBO.shutdownLobbyAlt(lobbyEntity);
 		tokenSessionBO.setActiveLobbyId(securityToken, 0L);
 		tokenSessionBO.setSearchEventId(activePersonaId, 0);
 		System.out.println("### /leavelobby");
@@ -238,10 +232,7 @@ public class MatchMaking {
 	public String declineInvite(@HeaderParam("securityToken") String securityToken, @QueryParam("lobbyInviteId") Long lobbyInviteId) {
 		LobbyEntity lobbyEntity = lobbyDAO.findById(lobbyInviteId);
 		EventEntity eventEntity = eventDAO.findById(tokenSessionBO.getSearchEventId(securityToken));
-		if (lobbyEntity != null && lobbyEntrantDAO.isLobbyEmpty(lobbyEntity) && !lobbyEntity.getIsPrivate()) { // Delete the empty lobby
-			System.out.println("### /declineinvite delete"); // However, private lobby will stay until the timeout
-			lobbyCountdownBO.endLobby(lobbyEntity);
-		}
+		lobbyCountdownBO.shutdownLobbyAlt(lobbyEntity);
 		tokenSessionBO.setActiveLobbyId(securityToken, 0L);
 		Long activePersonaId = tokenSessionBO.getActivePersonaId(securityToken);
 		PersonaEntity personaEntity = personaDAO.findById(activePersonaId);
