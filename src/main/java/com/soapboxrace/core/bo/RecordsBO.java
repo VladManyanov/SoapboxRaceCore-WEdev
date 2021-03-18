@@ -5,7 +5,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import javax.ejb.EJB;
-import javax.ejb.Schedule;
 import javax.ejb.Stateless;
 
 import com.soapboxrace.core.bo.util.DiscordWebhook;

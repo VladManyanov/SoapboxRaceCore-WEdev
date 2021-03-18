@@ -19,7 +19,6 @@ import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.XMLGregorianCalendar;
 
 import com.soapboxrace.core.bo.util.AchievementType;
-import com.soapboxrace.core.bo.util.OwnedCarConverter;
 import com.soapboxrace.core.bo.util.RewardDestinyType;
 import com.soapboxrace.core.bo.util.RewardType;
 import com.soapboxrace.core.bo.util.StringListConverter;
@@ -45,12 +44,8 @@ import com.soapboxrace.core.jpa.AchievementRankEntity;
 import com.soapboxrace.core.jpa.AchievementStateEntity;
 import com.soapboxrace.core.jpa.BadgeDefinitionEntity;
 import com.soapboxrace.core.jpa.BadgePersonaEntity;
-import com.soapboxrace.core.jpa.BasketDefinitionEntity;
-import com.soapboxrace.core.jpa.CarSlotEntity;
-import com.soapboxrace.core.jpa.CustomCarEntity;
 import com.soapboxrace.core.jpa.EventDataEntity;
 import com.soapboxrace.core.jpa.LobbyEntity;
-import com.soapboxrace.core.jpa.OwnedCarEntity;
 import com.soapboxrace.core.jpa.PersonaEntity;
 import com.soapboxrace.core.jpa.ProductEntity;
 import com.soapboxrace.core.jpa.RewardDropEntity;
@@ -76,13 +71,11 @@ import com.soapboxrace.jaxb.http.CommerceItemTrans;
 import com.soapboxrace.jaxb.http.CommerceResultStatus;
 import com.soapboxrace.jaxb.http.DragArbitrationPacket;
 import com.soapboxrace.jaxb.http.InvalidBasketTrans;
-import com.soapboxrace.jaxb.http.OwnedCarTrans;
 import com.soapboxrace.jaxb.http.PursuitArbitrationPacket;
 import com.soapboxrace.jaxb.http.RouteArbitrationPacket;
 import com.soapboxrace.jaxb.http.StatConversion;
 import com.soapboxrace.jaxb.http.TeamEscapeArbitrationPacket;
 import com.soapboxrace.jaxb.http.WalletTrans;
-import com.soapboxrace.jaxb.util.JAXBUtility;
 import com.soapboxrace.jaxb.xmpp.AchievementAwarded;
 import com.soapboxrace.jaxb.xmpp.AchievementProgress;
 import com.soapboxrace.jaxb.xmpp.AchievementsAwarded;
@@ -146,6 +139,9 @@ public class AchievementsBO {
 	
 	@EJB
 	private EventSessionDAO eventSessionDAO;
+	
+	@EJB
+	private BasketBO basketBO;
 	
 	@EJB
 	private StringListConverter stringListConverter;
@@ -726,27 +722,7 @@ public class AchievementsBO {
 				item.setTitle(boostFormat + " SPEEDBOOST");
 				break;
 			case GARAGE:
-				// FIXME pog copiada do basketbo
-				BasketDefinitionEntity basketDefinitonEntity = basketDefinitionsDAO.findById(product.getProductId());
-				if (basketDefinitonEntity == null) {
-					throw new IllegalArgumentException(String.format("No basket definition for %s", product.getProductId()));
-				}
-				String ownedCarTransStr = basketDefinitonEntity.getOwnedCarTrans();
-				OwnedCarTrans ownedCarTrans = JAXBUtility.unMarshal(ownedCarTransStr, OwnedCarTrans.class);
-				ownedCarTrans.setId(0L);
-				ownedCarTrans.getCustomCar().setId(0);
-				CarSlotEntity carSlotEntity = new CarSlotEntity();
-				carSlotEntity.setPersona(personaEntity);
-
-				OwnedCarEntity ownedCarEntity = new OwnedCarEntity();
-				ownedCarEntity.setCarSlot(carSlotEntity);
-				CustomCarEntity customCarEntity = new CustomCarEntity();
-				customCarEntity.setOwnedCar(ownedCarEntity);
-				ownedCarEntity.setCustomCar(customCarEntity);
-				carSlotEntity.setOwnedCar(ownedCarEntity);
-				OwnedCarConverter.trans2Entity(ownedCarTrans, ownedCarEntity);
-				OwnedCarConverter.details2NewEntity(ownedCarTrans, ownedCarEntity);
-				carSlotDAO.insert(carSlotEntity);
+				basketBO.buyCar(product.getProductId(), personaEntity, false, userEntity);
 
 				// FIXME get better icon hash, like gift
 				item.setHash(product.getHash());

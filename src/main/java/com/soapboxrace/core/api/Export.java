@@ -30,7 +30,7 @@ public class Export {
 	@Path("/getPlayerDefaultCar")
 	@Produces(MediaType.TEXT_PLAIN)
 	public String getPlayerDefaultCar(@FormParam("adminToken") String adminToken, @FormParam("playerName") String playerName) {
-		if (parameterBO.getStrParam("ADMIN_TOKEN").equals(adminToken)) {
+		if (parameterBO.getStrParam("TOKEN_ADMIN").equals(adminToken)) {
 			PersonaEntity personaEntity = personaDAO.findByNameIgnoreCase(playerName);
 			OwnedCarTrans ownedCarTrans = personaBO.getDefaultCar(personaEntity.getPersonaId());
 			return JAXBUtility.marshal(ownedCarTrans);
