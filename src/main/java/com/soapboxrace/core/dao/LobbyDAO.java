@@ -49,7 +49,8 @@ public class LobbyDAO extends BaseDAO<LobbyEntity> {
 		}
 		System.out.println("### findAllMPLobbies, prepare");
 		
-		if (query.getResultList().isEmpty() && searchStage == 1) {
+		List<LobbyEntity> resultList = query.getResultList();
+		if (resultList.isEmpty() && searchStage == 1) {
 			System.out.println("### going to searchStage 2");
 			findAllMPLobbies(carClassHash, raceFilter, 2, isSClassFilterActive); 
 			// 1 to 2 - Repeat the search without strict class restriction, to class groups priority
@@ -57,7 +58,7 @@ public class LobbyDAO extends BaseDAO<LobbyEntity> {
 			// 3 - No lobbies at all, wait for new lobbies on Queue MM
 		}
 		System.out.println("### lobbyDAO finished, searchStage " + searchStage);
-		return query.getResultList();
+		return resultList;
 	}
 	
 	public String getSqlLobbySearch(int raceFilter, int searchStage, int carClassHash, boolean isSClassFilterActive) {

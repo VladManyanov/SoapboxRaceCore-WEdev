@@ -1,6 +1,6 @@
 package com.soapboxrace.core.bo;
 
-import java.util.List;
+import java.util.Set;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -225,7 +225,7 @@ public class RewardBO {
 
 	public void setSkillMultiplierReward(PersonaEntity personaEntity, RewardVO rewardVO, SkillModRewardType skillModRewardType) {
 		CarSlotEntity defaultCarEntity = personaBo.getDefaultCarEntity(personaEntity.getPersonaId());
-		List<SkillModPartEntity> skillModParts = defaultCarEntity.getOwnedCar().getCustomCar().getSkillModParts();
+		Set<SkillModPartEntity> skillModParts = defaultCarEntity.getOwnedCar().getCustomCar().getSkillModParts();
 		float skillMultiplier = 0f;
 		float maxSkillMultiplier = 30f;
 		if (SkillModRewardType.EXPLORER.equals(skillModRewardType)) {

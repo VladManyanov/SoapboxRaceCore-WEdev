@@ -488,14 +488,6 @@ public class BasketBO {
 
 	public List<CarSlotEntity> getPersonasCar(Long personaId) {
 		List<CarSlotEntity> findByPersonaId = carSlotDAO.findByPersonaId(personaId);
-		for (CarSlotEntity carSlotEntity : findByPersonaId) {
-			CustomCarEntity customCar = carSlotEntity.getOwnedCar().getCustomCar();
-			customCar.getPaints().size();
-			customCar.getPerformanceParts().size();
-			customCar.getSkillModParts().size();
-			customCar.getVisualParts().size();
-			customCar.getVinyls().size();
-		}
 		return findByPersonaId;
 	}
 

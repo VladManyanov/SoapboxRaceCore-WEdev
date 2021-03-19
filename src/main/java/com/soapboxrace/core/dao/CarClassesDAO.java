@@ -1,6 +1,5 @@
 package com.soapboxrace.core.dao;
 
-import java.math.BigInteger;
 import java.util.List;
 
 import javax.ejb.Stateless;

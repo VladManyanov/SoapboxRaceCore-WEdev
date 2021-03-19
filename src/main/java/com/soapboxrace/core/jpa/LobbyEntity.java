@@ -26,9 +26,6 @@ import javax.persistence.Transient;
 		@NamedQuery(name = "LobbyEntity.findAllOpen", //
 				query = "SELECT obj FROM LobbyEntity obj WHERE obj.isPrivate = false AND obj.started = false AND (obj.lobbyDateTimeStart between :dateTime1 and :dateTime2) OR (obj.lobbyDateTimeStart = null) "), //
 		
-		// CarDivision check
-		// and (obj.carDivision = 'bas' or obj.carDivision = :carDivision) 
-		
 		@NamedQuery(name = "LobbyEntity.findByEventStarted", query = "SELECT obj FROM LobbyEntity obj WHERE obj.event = :event AND obj.started = false AND (obj.lobbyDateTimeStart between :dateTime1 AND :dateTime2) OR (obj.lobbyDateTimeStart = null) AND obj.isPrivate = false"), //
 		@NamedQuery(name = "LobbyEntity.findByEventAndPersona", query = "SELECT obj FROM LobbyEntity obj WHERE obj.started = false AND obj.event = :event AND (obj.lobbyDateTimeStart between :dateTime1 AND :dateTime2) OR (obj.lobbyDateTimeStart = null) AND obj.isPrivate = true AND obj.personaId = :personaId"), //
 		@NamedQuery(name = "LobbyEntity.findByHosterPersona", query = "SELECT obj FROM LobbyEntity obj WHERE obj.started = false AND obj.personaId = :personaId"), //
@@ -54,8 +51,6 @@ public class LobbyEntity {
 	private Boolean isPrivate;
 
 	private Long personaId;
-	
-	private String carDivision;
 	
 	private Long team1Id;
 	
@@ -108,14 +103,6 @@ public class LobbyEntity {
 
 	public void setIsPrivate(Boolean isPrivate) {
 		this.isPrivate = isPrivate;
-	}
-	
-	public String getCarDivision() {
-		return carDivision;
-	}
-	
-	public void setCarDivision(String carDivision) {
-		this.carDivision = carDivision;
 	}
 
 	public Long getPersonaId() {

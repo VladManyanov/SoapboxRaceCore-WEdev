@@ -3,6 +3,8 @@ package com.soapboxrace.core.bo;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.List;
+import java.util.Set;
+
 import javax.ejb.EJB;
 import javax.ejb.Schedule;
 import javax.ejb.Stateless;
@@ -142,8 +144,8 @@ public class EventBO {
 	
 	public void updateEventCarInfo(Long personaId, Long eventDataId, CustomCarEntity customCarEntity) {
 		EventCarInfoEntity eventCarInfoEntity = eventCarInfoDao.findByEventData(eventDataId);
-		List<SkillModPartEntity> skillModsArray = customCarEntity.getSkillModParts();
-		List<PerformancePartEntity> perfArray = customCarEntity.getPerformanceParts();
+		Set<SkillModPartEntity> skillModsArray = customCarEntity.getSkillModParts();
+		Set<PerformancePartEntity> perfArray = customCarEntity.getPerformanceParts();
 		int carRating = customCarEntity.getRating();
 		
 		eventCarInfoEntity.setSkillParts(stringListConverter.skillModsStrArray(skillModsArray));

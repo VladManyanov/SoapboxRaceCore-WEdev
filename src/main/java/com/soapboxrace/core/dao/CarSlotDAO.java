@@ -34,6 +34,14 @@ public class CarSlotDAO extends BaseDAO<CarSlotEntity> {
 		return query.getResultList();
 	}
 	
+	public CarSlotEntity findCarByPersonaId(PersonaEntity persona, int curCarIndex) {
+		TypedQuery<CarSlotEntity> query = entityManager.createNamedQuery("CarSlotEntity.findByPersonaId", CarSlotEntity.class);
+        query.setParameter("persona", persona);
+        query.setFirstResult(curCarIndex);
+        query.setMaxResults(1);
+        return query.getSingleResult();
+	}
+	
 	public BigInteger countPersonaCars(Long personaId) {
 		Query query = entityManager.createNativeQuery(
 			"SELECT Count(*) from carSlot WHERE personaId = "+personaId

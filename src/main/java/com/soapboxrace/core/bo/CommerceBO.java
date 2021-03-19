@@ -2,6 +2,7 @@ package com.soapboxrace.core.bo;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -173,7 +174,7 @@ public class CommerceBO {
 			break;
 		case VISUAL:
 			visualPartDAO.deleteByCustomCar(customCarEntity);
-			OwnedCarConverter.visuallParts2NewEntity(customCarTrans, customCarEntity);
+			OwnedCarConverter.visualParts2NewEntity(customCarTrans, customCarEntity);
 			break;
 		default:
 			break;
@@ -197,7 +198,7 @@ public class CommerceBO {
 		if(carClassesEntity == null) {
 			return;
 		}
-		List<PerformancePartEntity> performanceParts = customCarEntity.getPerformanceParts();
+		Set<PerformancePartEntity> performanceParts = customCarEntity.getPerformanceParts();
 		int topSpeed = 0;
 		int accel = 0;
 		int handling = 0;

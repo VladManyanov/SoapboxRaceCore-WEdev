@@ -145,7 +145,6 @@ public class LobbyBO {
 		List<Long> listOfPersona = openFireRestApiCli.getAllPersonaByGroup(personaId);
 		if (!listOfPersona.isEmpty()) {
 			PersonaEntity personaEntity = personaDao.findById(personaId);
-//			String carDivision = this.carDivision(carClassHash);
 			createLobby(personaEntity, eventId, true, false, carClassHash);
 
 			LobbyEntity lobbys = lobbyDao.findByEventAndPersona(eventId, personaId);
@@ -186,11 +185,9 @@ public class LobbyBO {
 		}
 		lobbyEntity.setCarClassHash(carClassHash);
 		lobbyEntity.setStarted(false);
-//		lobbyEntity.setCarDivision(carDivision);
 		lobbyDao.insert(lobbyEntity);
 
 		if (parameterBO.getBoolParam("REDIS_ENABLE") && !isPrivate) { // Queue Matchmaking
-//			matchmakingBO.changePlayerCountInQueue(true); // Add the hoster to the queue player count, but not in the queue itself
 			int playersFounded = 1;
 			for (int i = 1; i <= eventMaxPlayers - 1; i++) { // Search a players for all of the event slots
 	            if (lobbyEntrantDAO.getPlayerCount(lobbyEntity) >= eventMaxPlayers) break;
@@ -209,7 +206,6 @@ public class LobbyBO {
 	        }
 			if (playersFounded > 1) {
 				System.out.println("### Get the player ACTIVE");
-//				matchmakingBO.changePlayerCountInQueue(false); // Remove the hoster from queue player count
             	sendJoinEvent(personaId, lobbyEntity, eventId, false);
             	setIsLobbyReserved(lobbyEntity, true);
             	if (!tempCreated) {

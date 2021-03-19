@@ -1,6 +1,8 @@
 package com.soapboxrace.core.bo.util;
 
+import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -38,26 +40,32 @@ public class StringListConverter {
 		return sbArray.toString();
 	}
 	
-	public String skillModsStrArray(List<SkillModPartEntity> skillModsArray) {
+	public String skillModsStrArray(Set<SkillModPartEntity> skillModsArray) {
 		int itemCount = skillModsArray.size();
 		if (itemCount == 0) {
 			return null;
 		}
 		Integer[] skillModsIntArray = new Integer[itemCount];
-		for (int i = 0; i < itemCount; i++) {
-			skillModsIntArray[i] = skillModsArray.get(i).getSkillModPartAttribHash();
+		Iterator<SkillModPartEntity> skillModsIterArray = skillModsArray.iterator();
+		int i = 0;
+		while (skillModsIterArray.hasNext()) {
+			skillModsIntArray[i] = skillModsIterArray.next().getSkillModPartAttribHash();
+			i++;
 		}
 		return hashItemsList(skillModsIntArray);
 	}
 	
-	public String perfPartsStrArray(List<PerformancePartEntity> perfArray) {
+	public String perfPartsStrArray(Set<PerformancePartEntity> perfArray) {
 		int itemCount = perfArray.size();
 		if (itemCount == 0) {
 			return null;
 		}
 		Integer[] perfPartsIntArray = new Integer[itemCount];
-		for (int i = 0; i < itemCount ; i++) {
-			perfPartsIntArray[i] = perfArray.get(i).getPerformancePartAttribHash();
+		Iterator<PerformancePartEntity> perfPartsIterArray = perfArray.iterator();
+		int i = 0;
+		while (perfPartsIterArray.hasNext()) {
+			perfPartsIntArray[i] = perfPartsIterArray.next().getPerformancePartAttribHash();
+			i++;
 		}
 		return hashItemsList(perfPartsIntArray);
 	}

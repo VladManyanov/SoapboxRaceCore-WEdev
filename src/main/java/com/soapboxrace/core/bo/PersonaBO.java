@@ -100,21 +100,15 @@ public class PersonaBO {
 		// if (personaEntity == null) {
 		// personaEntity = personaDAO.findById(100l);
 		// }
-		List<CarSlotEntity> carSlotList = getPersonasCar(personaId);
+		int carSlotCount = carSlotDAO.countPersonaCars(personaId).intValue();
 		Integer curCarIndex = personaEntity.getCurCarIndex();
-		if (!carSlotList.isEmpty()) {
-			if (curCarIndex >= carSlotList.size()) {
-				curCarIndex = carSlotList.size() - 1;
-				CarSlotEntity ownedCarEntity = carSlotList.get(curCarIndex);
-				changeDefaultCar(personaId, ownedCarEntity.getId());
+		if (carSlotCount > 0) {
+			if (curCarIndex >= carSlotCount) {
+				 curCarIndex = carSlotCount - 1;
+	             personaEntity.setCurCarIndex(curCarIndex);
+	             personaDAO.update(personaEntity);
 			}
-			CarSlotEntity carSlotEntity = carSlotList.get(curCarIndex);
-			CustomCarEntity customCar = carSlotEntity.getOwnedCar().getCustomCar();
-			customCar.getPaints().size();
-			customCar.getPerformanceParts().size();
-			customCar.getSkillModParts().size();
-			customCar.getVisualParts().size();
-			customCar.getVinyls().size();
+			CarSlotEntity carSlotEntity = carSlotDAO.findCarByPersonaId(personaEntity, curCarIndex);
 			return carSlotEntity;
 		}
 		return null;
@@ -144,7 +138,6 @@ public class PersonaBO {
 		}
 		OwnedCarEntity ownedCarEntity = carSlotEntity.getOwnedCar();
 		CustomCarEntity customCarEntityVer = ownedCarEntity.getCustomCar();
-		
 		CarClassesEntity carClassesEntity = carClassesDAO.findByHash(customCarEntityVer.getPhysicsProfileHash());
 		// Re-calc class & rating
 		if (ownedCarEntity.getCarVersion() != carClassesEntity.getCarVersion() || customCarEntityVer.getRating() == 0) {
@@ -152,7 +145,6 @@ public class PersonaBO {
 			commerceBO.calcNewCarClass(customCarEntityVer);
 		}
         OwnedCarTrans ownedCarTrans = OwnedCarConverter.entity2Trans(carSlotEntity.getOwnedCar());
-
 		return ownedCarTrans;
 	}
 
@@ -166,12 +158,6 @@ public class PersonaBO {
 
 	public OwnedCarEntity getCarByOwnedCarId(Long ownedCarId) {
 		OwnedCarEntity ownedCarEntity = ownedCarDAO.findById(ownedCarId);
-		CustomCarEntity customCar = ownedCarEntity.getCustomCar();
-		customCar.getPaints().size();
-		customCar.getPerformanceParts().size();
-		customCar.getSkillModParts().size();
-		customCar.getVisualParts().size();
-		customCar.getVinyls().size();
 		return ownedCarEntity;
 	}
 
