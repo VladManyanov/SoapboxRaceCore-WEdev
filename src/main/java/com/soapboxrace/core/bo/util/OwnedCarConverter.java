@@ -171,12 +171,7 @@ public class OwnedCarConverter {
 			paintEntity.setVar(customPaintTransTmp.getVar());
 			paintEntityList.add(paintEntity);
 		}
-		if (customCarEntity.getPaints() == null) {
-			customCarEntity.setPaints(paintEntityList);
-        } else {
-        	customCarEntity.getPaints().clear();
-        	customCarEntity.getPaints().addAll(paintEntityList);
-        }
+		customCarEntity.setPaints(paintEntityList);
 	}
 
 	public static void performanceParts2NewEntity(CustomCarTrans customCarTrans, CustomCarEntity customCarEntity) {
@@ -188,12 +183,7 @@ public class OwnedCarConverter {
 			performancePartEntity.setPerformancePartAttribHash(performancePartTransTmp.getPerformancePartAttribHash());
 			performancePartEntityList.add(performancePartEntity);
 		}
-		if (customCarEntity.getPerformanceParts() == null) {
-			customCarEntity.setPerformanceParts(performancePartEntityList);
-        } else {
-        	customCarEntity.getPerformanceParts().clear();
-        	customCarEntity.getPerformanceParts().addAll(performancePartEntityList);
-        }
+		customCarEntity.setPerformanceParts(performancePartEntityList);
 	}
 
 	public static void skillModParts2NewEntity(CustomCarTrans customCarTrans, CustomCarEntity customCarEntity) {
@@ -206,12 +196,7 @@ public class OwnedCarConverter {
 			skillModPartEntity.setSkillModPartAttribHash(skillModPartTransTmp.getSkillModPartAttribHash());
 			skillModPartEntityList.add(skillModPartEntity);
 		}
-		if (customCarEntity.getSkillModParts() == null) {
-			customCarEntity.setSkillModParts(skillModPartEntityList);
-        } else {
-        	customCarEntity.getSkillModParts().clear();
-        	customCarEntity.getSkillModParts().addAll(skillModPartEntityList);
-        }
+		customCarEntity.setSkillModParts(skillModPartEntityList);
 	}
 
 	public static void vinyls2NewEntity(CustomCarTrans customCarTrans, CustomCarEntity customCarEntity) {
@@ -243,12 +228,7 @@ public class OwnedCarConverter {
 			vinylEntity.setVar4(customVinylTransTmp.getVar4());
 			vinylEntityList.add(vinylEntity);
 		}
-		if (customCarEntity.getVinyls() == null) {
-			customCarEntity.setVinyls(vinylEntityList);
-        } else {
-        	customCarEntity.getVinyls().clear();
-        	customCarEntity.getVinyls().addAll(vinylEntityList);
-        }
+		customCarEntity.setVinyls(vinylEntityList);
 	}
 
 	public static void visualParts2NewEntity(CustomCarTrans customCarTrans, CustomCarEntity customCarEntity) {
@@ -261,12 +241,7 @@ public class OwnedCarConverter {
 			visualPartEntity.setSlotHash(visualPartTransTmp.getSlotHash());
 			visualPartEntityList.add(visualPartEntity);
 		}
-		if (customCarEntity.getVisualParts() == null) {
-			customCarEntity.setVisualParts(visualPartEntityList);
-        } else {
-        	customCarEntity.getVisualParts().clear();
-        	customCarEntity.getVisualParts().addAll(visualPartEntityList);
-        }
+		customCarEntity.setVisualParts(visualPartEntityList);
 	}
 
 	public static void details2NewEntity(OwnedCarTrans ownedCarTrans, OwnedCarEntity ownedCarEntity) {

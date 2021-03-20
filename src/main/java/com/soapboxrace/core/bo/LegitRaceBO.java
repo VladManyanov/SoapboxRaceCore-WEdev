@@ -116,7 +116,7 @@ public class LegitRaceBO {
 		}
 		if (!raceIssues && speedBugChance) { // Prevent possibly speed-bugged time to be saved
 			raceIssues = true;
-			openFireSoapBoxCli.send(XmppChat.createSystemMessage("### You game session is too long to save a record, restart the game."), personaId);
+			openFireSoapBoxCli.send(XmppChat.createSystemMessage("### Your game session is too long to save a record, restart the game."), personaId);
 		}
 		if (!raceIssues && eventEntity.getMinTime() >= raceTime) { // Race minimal time-limit
 			raceIssues = true;
