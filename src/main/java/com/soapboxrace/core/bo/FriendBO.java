@@ -19,11 +19,14 @@ import com.soapboxrace.core.jpa.PersonaPresenceEntity;
 import com.soapboxrace.core.jpa.TokenSessionEntity;
 import com.soapboxrace.core.xmpp.OpenFireRestApiCli;
 import com.soapboxrace.core.xmpp.OpenFireSoapBoxCli;
+import com.soapboxrace.core.xmpp.XmppChat;
 import com.soapboxrace.jaxb.http.ArrayOfBadgePacket;
 import com.soapboxrace.jaxb.http.ArrayOfFriendPersona;
 import com.soapboxrace.jaxb.http.FriendPersona;
+import com.soapboxrace.jaxb.http.FriendResult;
 import com.soapboxrace.jaxb.http.PersonaBase;
 import com.soapboxrace.jaxb.http.PersonaFriendsList;
+import com.soapboxrace.jaxb.xmpp.XMPP_FriendPersonaType;
 import com.soapboxrace.jaxb.xmpp.XMPP_FriendResultType;
 import com.soapboxrace.jaxb.xmpp.XMPP_ResponseTypeFriendResult;
 import com.soapboxrace.jaxb.xmpp.XMPP_ResponseTypePersonaBase;
@@ -82,6 +85,9 @@ public class FriendBO {
 	
 	@EJB
 	private AchievementsBO achievementsBO;
+	
+	@EJB
+	private WindowCommandsBO windowCommandsBO;
 
 	// Loading the player friend-list
 	public PersonaFriendsList getFriendListFromUserId(Long userId) {
@@ -190,6 +196,61 @@ public class FriendBO {
 		personaBase.setScore(personaSender.getScore());
 		personaBase.setUserId(personaSenderUser);
 		return personaBase;
+	}
+	
+	public FriendResult sendFriendRequest(Long personaId, String displayName, String reqMessage) {
+		PersonaEntity personaSender = personaDAO.findById(personaId);
+		if (displayName.startsWith("/")) { // Execute custom client commands
+			windowCommandsBO.WindowCommandChoice(personaId, personaSender, displayName);
+			return null;
+		}
+		else { // default add-a-friend interaction
+			PersonaEntity personaInvited = personaDAO.findByName(displayName);
+			Long senderId = personaSender.getPersonaId();
+			Long senderUserId = personaSender.getUser().getId();
+			if (personaSender == null || personaInvited == null) {
+				openFireSoapBoxCli.send(XmppChat.createSystemMessage("### Wrong nickname, try again."), senderId);
+				return null;
+			}
+			Long invitedId = personaInvited.getPersonaId();
+			Long invitedUserId = personaInvited.getUser().getId();
+			if (senderId == invitedId || senderUserId == invitedUserId) {
+				openFireSoapBoxCli.send(XmppChat.createSystemMessage("### You cannot be a friend for yourself."), senderId);
+				return null;
+			}
+			FriendListEntity friendListEntity = friendListDAO.findByOwnerIdAndFriendPersona(invitedUserId, senderId);
+			if (friendListEntity != null) {
+				openFireSoapBoxCli.send(XmppChat.createSystemMessage("### This player is already on your friend-list."), senderId);
+				return null;
+			}
+			XMPP_FriendPersonaType friendPersonaType = new XMPP_FriendPersonaType();
+			friendPersonaType.setIconIndex(personaSender.getIconIndex());
+			friendPersonaType.setLevel(personaSender.getLevel());
+			friendPersonaType.setName(personaSender.getName());
+			friendPersonaType.setOriginalName(personaSender.getName());
+			friendPersonaType.setPersonaId(senderId);
+			friendPersonaType.setPresence(3);
+			friendPersonaType.setUserId(senderUserId);
+
+			XmppFriend xmppFriend = new XmppFriend(invitedId, openFireSoapBoxCli);
+			xmppFriend.sendFriendRequest(friendPersonaType);
+			createNewFriendListEntry(senderId, invitedUserId, senderUserId, false, false);
+
+			FriendPersona friendPersona = new FriendPersona();
+			friendPersona.setIconIndex(personaInvited.getIconIndex());
+			friendPersona.setLevel(personaInvited.getLevel());
+			friendPersona.setName(personaInvited.getName());
+			friendPersona.setOriginalName(personaInvited.getName());
+			friendPersona.setPersonaId(invitedId);
+			friendPersona.setPresence(0);
+			friendPersona.setSocialNetwork(0);
+			friendPersona.setUserId(invitedUserId);
+
+			FriendResult friendResult = new FriendResult();
+			friendResult.setPersona(friendPersona);
+			friendResult.setResult(0);
+			return friendResult;
+		}
 	}
 
 	public void createNewFriendListEntry(Long friendPersonaId, Long userSenderId, Long userInvitedId, boolean isAccepted, boolean isBlocked) {

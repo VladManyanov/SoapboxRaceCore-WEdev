@@ -191,6 +191,19 @@ public class RestApi {
 		return Response.ok(bo.getRaces(all)).build();
 	}
 	/**
+	 * Информация о поиске лобби в Быстрой Гонке (Race Now)
+	 */
+	@GET
+	@Path("MatchmakingWebStats")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response mmWebStats(@QueryParam("key") String key) {
+		if (!parameterBO.getStrParam("RESTAPI_KEY").equals(key)) {
+			String accessDenied = parameterBO.getStrParam("RESTAPI_FAILURELINK");
+			return Response.temporaryRedirect(URI.create(accessDenied)).build();
+		}
+		return Response.ok(bo.getMatchmakingWebStats()).build();
+	}
+	/**
 	 * Страница Списка профилей
 	 */
 	@GET

@@ -23,6 +23,7 @@ import com.soapboxrace.core.jpa.LobbyEntity;
 import com.soapboxrace.core.jpa.PersonaPresenceEntity;
 import com.soapboxrace.core.xmpp.OpenFireSoapBoxCli;
 import com.soapboxrace.core.xmpp.XmppChat;
+import com.soapboxrace.jaxb.http.ArrayOfMMLobbies;
 
 /**
  * Responsible for managing the multiplayer matchmaking system.
@@ -89,7 +90,7 @@ public class MatchmakingBO {
     	String playerVehicleInfo = carClass.toString() + "," + raceFilter.toString() + "," + isAvailable + "," + searchStage;
         if (this.redisConnection != null) {
             this.redisConnection.sync().hset("matchmaking_queue", personaId.toString(), playerVehicleInfo);
-            matchmakingWebStatus();
+            matchmakingWebStatusTest();
 //          System.out.println("playerCount add (+1): " + curPlayerCount);
         }
     }
@@ -102,7 +103,7 @@ public class MatchmakingBO {
     public void removePlayerFromQueue(Long personaId) {
         if (this.redisConnection != null) {
             this.redisConnection.sync().hdel("matchmaking_queue", personaId.toString());
-            matchmakingWebStatus();
+            matchmakingWebStatusTest();
 //          System.out.println("playerCount remove (+1): " + curPlayerCount);
         }
     }
@@ -180,8 +181,73 @@ public class MatchmakingBO {
         return isPlayerPassed;
     }
     
-    // @Schedule(minute = "*/1", hour = "*", persistent = false)
-    public void matchmakingWebStatus() {
+    /**
+     * Information output for API, contains real-time Race Now status and available lobbies.
+     *
+     * @return ArrayOfMMLobbies class with Matchmaking data
+     */
+    public ArrayOfMMLobbies matchmakingWebStatus() {
+        System.out.println("### matchmakingWebStatusInit");
+        ArrayOfMMLobbies arrayOfMMLobbies = new ArrayOfMMLobbies();
+        int playerCount = 0;
+        ScanIterator<KeyValue<String, String>> searchIterator = ScanIterator.hscan(this.redisConnection.sync(), "matchmaking_queue");
+
+        // Check the car class of all players in MM Queue
+        while (searchIterator.hasNext()) {
+        	System.out.println("### matchmakingWebStatus playerFetchStart");
+        	KeyValue<String, String> keyValue = searchIterator.next();
+            String[] playerVehicleInfo = keyValue.getValue().split(",");
+            int playerCarClass = Integer.parseInt(playerVehicleInfo[0]);
+            int isAvailable = Integer.parseInt(playerVehicleInfo[2]);
+            if (isAvailable == 1) {
+            	switch (CarClassType.valueOf(playerCarClass)) {
+                case S_CLASS:
+                	arrayOfMMLobbies.setPlayerCountS(arrayOfMMLobbies.getPlayerCountS() + 1); break;
+                case A_CLASS:
+                	arrayOfMMLobbies.setPlayerCountA(arrayOfMMLobbies.getPlayerCountA() + 1); break;
+                case B_CLASS:
+                	arrayOfMMLobbies.setPlayerCountB(arrayOfMMLobbies.getPlayerCountB() + 1); break;
+                case C_CLASS:
+                	arrayOfMMLobbies.setPlayerCountC(arrayOfMMLobbies.getPlayerCountC() + 1); break;
+                case D_CLASS:
+                	arrayOfMMLobbies.setPlayerCountD(arrayOfMMLobbies.getPlayerCountD() + 1); break;
+                case E_CLASS:
+                	arrayOfMMLobbies.setPlayerCountE(arrayOfMMLobbies.getPlayerCountE() + 1); break;
+                default:
+                	// Should we display this category too?
+                	arrayOfMMLobbies.setPlayerCountMisc(arrayOfMMLobbies.getPlayerCountMisc() + 1); break;
+                }
+            	playerCount++;
+            }
+            System.out.println("### matchmakingWebStatus playerFetchEnd");
+        }
+        arrayOfMMLobbies.setPlayerCountAll(playerCount);
+   
+        // Let's get the lobbies information
+        List<LobbyEntity> lobbiesList = lobbyDAO.findAllOpen();
+        if (!lobbiesList.isEmpty()) {
+        	System.out.println("### matchmakingWebStatus lobbiesStart");
+        	for (LobbyEntity lobby : lobbiesList) {
+        		EventEntity lobbyEvent = lobby.getEvent();
+        		String eventName = lobbyEvent.getName();
+        		String eventMode = EventModeType.valueOf(lobbyEvent.getEventModeId()).toString();
+        		String eventCarClassStr = eventResultBO.getCarClassLetter(lobbyEvent.getCarClassHash());
+        		String lobbyHosterCarClassStr = eventResultBO.getCarClassLetter(lobby.getCarClassHash());
+        		
+        		boolean isPlayersInside = false;
+        		if (lobby.getLobbyDateTimeStart() != null) {isPlayersInside = true;}
+        		boolean isTeamRace = false;
+        		if (lobby.getTeam1Id() != null) {isTeamRace = true;}
+        		
+        		arrayOfMMLobbies.add(eventMode, eventName, eventCarClassStr, lobbyHosterCarClassStr, isTeamRace, isPlayersInside);
+        		System.out.println("### matchmakingWebStatus lobbiesOne");
+            }
+        }
+        System.out.println("### matchmakingWebStatus finish");
+        return arrayOfMMLobbies;
+    }
+    
+    public void matchmakingWebStatusTest() {
         int SClassPlayers = 0;
         int AClassPlayers = 0;
         int BClassPlayers = 0;
@@ -189,12 +255,12 @@ public class MatchmakingBO {
         int DClassPlayers = 0;
         int EClassPlayers = 0;
         int playerCount = 0;
-        System.out.println("### matchmakingWebStatusInit");
+        System.out.println("### matchmakingTestStatusInit");
         ScanIterator<KeyValue<String, String>> searchIterator = ScanIterator.hscan(this.redisConnection.sync(), "matchmaking_queue");
 
         // Check the car class of all players in MM Queue
         while (searchIterator.hasNext()) {
-        	System.out.println("### matchmakingWebStatus playerFetchStart");
+        	System.out.println("### matchmakingTestStatus playerFetchStart");
         	KeyValue<String, String> keyValue = searchIterator.next();
             String[] playerVehicleInfo = keyValue.getValue().split(",");
             int playerCarClass = Integer.parseInt(playerVehicleInfo[0]);
@@ -231,7 +297,7 @@ public class MatchmakingBO {
                 	break;
                 }
             }
-            System.out.println("### matchmakingWebStatus playerFetchEnd");
+            System.out.println("### matchmakingTestStatus playerFetchEnd");
         }
         if (playerCount > 0) {
         	 System.out.println("### Players searching on Race Now, by classes: S[" + SClassPlayers + "], A[" + AClassPlayers + "], B[" + BClassPlayers + "],"

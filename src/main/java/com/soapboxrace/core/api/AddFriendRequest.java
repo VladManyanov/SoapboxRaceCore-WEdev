@@ -8,18 +8,15 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 
 import com.soapboxrace.core.api.util.Secured;
-import com.soapboxrace.core.bo.WindowCommandsBO;
+import com.soapboxrace.core.bo.FriendBO;
 import com.soapboxrace.jaxb.http.FriendResult;
 import com.soapboxrace.jaxb.util.JAXBUtility;
 
 @Path("/addfriendrequest")
 public class AddFriendRequest {
-
-//	@EJB
-//	private FriendBO bo;
 	
 	@EJB
-	private WindowCommandsBO bo;
+	private FriendBO bo;
 
 	@GET
 	@Secured

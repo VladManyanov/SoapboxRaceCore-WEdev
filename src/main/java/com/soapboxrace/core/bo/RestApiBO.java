@@ -41,6 +41,7 @@ import com.soapboxrace.core.jpa.UserEntity;
 import com.soapboxrace.jaxb.http.ArrayOfCarClassHash;
 import com.soapboxrace.jaxb.http.ArrayOfCarNameTop;
 import com.soapboxrace.jaxb.http.ArrayOfEvents;
+import com.soapboxrace.jaxb.http.ArrayOfMMLobbies;
 import com.soapboxrace.jaxb.http.ArrayOfPersonaBase;
 import com.soapboxrace.jaxb.http.ArrayOfProfileIcon;
 import com.soapboxrace.jaxb.http.ArrayOfRaceWithTime;
@@ -146,6 +147,11 @@ public class RestApiBO {
 	 */
 	@EJB
 	private ParameterBO parameterBO;
+	/**
+	 * Объект запросов в Redis и контроля поиска лобби заездов
+	 */
+	@EJB
+	private MatchmakingBO matchmakingBO;
 	
 	
 	// ================= Функции выборки ================
@@ -483,6 +489,15 @@ public class RestApiBO {
 		list.setCount(BigInteger.valueOf(races.size()));
 		return list;
 	}
+	
+	/**
+	 * Информация о поиске лобби в Быстрой Гонке (Race Now)
+	 */
+	public ArrayOfMMLobbies getMatchmakingWebStats() {
+		ArrayOfMMLobbies raceNowInfo = matchmakingBO.matchmakingWebStatus();
+		return raceNowInfo;
+	}
+	
 	/**
 	 * Получить постраничный список профилей
 	 * @param page - страница
