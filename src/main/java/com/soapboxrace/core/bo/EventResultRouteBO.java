@@ -27,7 +27,6 @@ import com.soapboxrace.core.xmpp.XmppChat;
 import com.soapboxrace.jaxb.http.Accolades;
 import com.soapboxrace.jaxb.http.ArbitrationPacket;
 import com.soapboxrace.jaxb.http.ArrayOfRouteEntrantResult;
-import com.soapboxrace.jaxb.http.ExitPath;
 import com.soapboxrace.jaxb.http.RouteArbitrationPacket;
 import com.soapboxrace.jaxb.http.RouteEntrantResult;
 import com.soapboxrace.jaxb.http.RouteEventResult;
@@ -224,7 +223,7 @@ public class EventResultRouteBO {
 			openFireSoapBoxCli.send(XmppChat.createSystemMessage("### This event can be affected by SpeedBug, restart the game."), personaId);
 		}
 		
-		eventResultBO.defineFinishLobby(routeEventResult, eventSessionEntity);
+		eventResultBO.defineFinishLobby(routeEventResult, eventSessionEntity, personaEntity.getRaceAgain());
 		// eventResultBO.physicsMetricsInfoDebug(routeArbitrationPacket);
 		int carclasshash = eventEntity.getCarClassHash();
 		boolean isDNFActive = parameterBO.getBoolParam("DNF_ENABLED");

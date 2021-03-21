@@ -49,6 +49,7 @@ public class PersonaEntity {
 	private boolean isHidden; // Temporarily removed persona
 	private boolean ignoreRaces; // Permanent "Ignore the event after being declined on the search" switch
 	private int priorityMMTimeout; // Personal Priority Class Group search timeout
+	private boolean raceAgain; // Permanent "Does the Race Again lobby invite on the finish appears" switch
 
 	@ManyToOne
 	@JoinColumn(name = "USERID", referencedColumnName = "ID", foreignKey = @ForeignKey(name = "FK_PERSONA_USER"))
@@ -238,6 +239,14 @@ public class PersonaEntity {
 
 	public void setPriorityMMTimeout(int priorityMMTimeout) {
 		this.priorityMMTimeout = priorityMMTimeout;
+	}
+	
+	public boolean getRaceAgain() {
+		return raceAgain;
+	}
+
+	public void setRaceAgain(boolean raceAgain) {
+		this.raceAgain = raceAgain;
 	}
 
 }

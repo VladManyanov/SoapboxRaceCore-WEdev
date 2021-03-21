@@ -240,11 +240,10 @@ public class EventResultBO {
 		return isModCar;
 	}
 	
-	public EventResult defineFinishLobby(EventResult eventResult, EventSessionEntity eventSessionEntity) {
-		boolean isFinishLobbyEnabled = parameterBO.getBoolParam("ENABLE_FINISHLOBBY");
+	public EventResult defineFinishLobby(EventResult eventResult, EventSessionEntity eventSessionEntity, boolean raceAgain) {
 		eventResult.setEventSessionId(eventSessionEntity.getId());
 		Long lobbyId = eventSessionEntity.getLobbyId();
-		if (lobbyId == 0 || !isFinishLobbyEnabled) { // Don't initiate Race Again if the race is single-player
+		if (lobbyId == 0 || !raceAgain) { // Don't initiate Race Again if the race is single-player, or player has disabled it
 			eventResult.setExitPath(ExitPath.EXIT_TO_FREEROAM);
 			eventResult.setInviteLifetimeInMilliseconds(0);
 			eventResult.setLobbyInviteId(0);

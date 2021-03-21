@@ -23,7 +23,6 @@ import com.soapboxrace.jaxb.http.ArrayOfDragEntrantResult;
 import com.soapboxrace.jaxb.http.DragArbitrationPacket;
 import com.soapboxrace.jaxb.http.DragEntrantResult;
 import com.soapboxrace.jaxb.http.DragEventResult;
-import com.soapboxrace.jaxb.http.ExitPath;
 import com.soapboxrace.jaxb.xmpp.XMPP_DragEntrantResultType;
 import com.soapboxrace.jaxb.xmpp.XMPP_ResponseTypeDragEntrantResult;
 
@@ -219,7 +218,7 @@ public class EventResultDragBO {
 		dragEventResult.setDurability(carDamageBO.updateDamageCar(activePersonaId, dragArbitrationPacket, dragArbitrationPacket.getNumberOfCollisions()));
 		dragEventResult.setEntrants(arrayOfDragEntrantResult);
 		dragEventResult.setEventId(currentEventId);
-		eventResultBO.defineFinishLobby(dragEventResult, eventSessionEntity);
+		eventResultBO.defineFinishLobby(dragEventResult, eventSessionEntity, personaEntity.getRaceAgain());
 		
 		// Check race record
 		legitRaceBO.isRecordVaildDrag(dragArbitrationPacket, eventDataEntity, customCarEntity, speedBugChance, personaEntity, eventEntity);

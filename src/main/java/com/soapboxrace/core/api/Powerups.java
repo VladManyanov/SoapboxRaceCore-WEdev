@@ -118,18 +118,7 @@ public class Powerups {
 		if (parameterBO.getBoolParam("ENABLE_POWERUP_DECREASE")) {
 			inventoryBO.decrementUsage(activePersonaId, powerupHash);
 		}
-		if ((powerupHash == -1564932069 || powerupHash == 1113720384)) {
-			 // It's illegal to activate the Team power-ups outside of Team Escape
-			Long currentEventModeId = personaPresenceEntity.getCurrentEventModeId();
-			if (currentEventModeId == 0 || currentEventModeId == 9 || currentEventModeId == 4 || currentEventModeId == 12) {
-				String personaName = personaDAO.findById(activePersonaId).getName();
-				String message = ":heavy_minus_sign:"
-		        		+ "\n:japanese_goblin: **|** Nгрок **" + personaName + "** активировал командные бонусы за пределами погонь."
-		        		+ "\n:japanese_goblin: **|** Player **" + personaName + "** has used the team power-ups outside of the pursuits."
-		        		+ "debug: " + currentEventModeId + ", " + personaPresenceEntity.getCurrentEventDataId() + ", " + personaPresenceEntity.getCurrentEventSessionId();
-				discordBot.sendMessage(message);
-			}
-		}
+		
 		PersonaEntity personaEntity = personaBO.getPersonaById(activePersonaId);
 		achievementsBO.applyPowerupAchievement(personaEntity);
 		return "";
