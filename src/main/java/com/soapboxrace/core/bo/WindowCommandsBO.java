@@ -342,6 +342,19 @@ public class WindowCommandsBO {
 			openFireSoapBoxCli.send(XmppChat.createSystemMessage("### Search timeout value has been saved."), personaId);
 			return null;
 		}
+		// Permanent "Does the Race Again lobby invite on the finish appears" switch
+		if (displayName.contentEquals("/RACEAGAIN")) {
+			if (personaSender.getRaceAgain()) {
+				personaSender.setRaceAgain(false);
+				personaDAO.update(personaSender);
+				openFireSoapBoxCli.send(XmppChat.createSystemMessage("### Race Again feature is disabled."), personaId);
+			} else {
+				personaSender.setRaceAgain(true);
+				personaDAO.update(personaSender);
+				openFireSoapBoxCli.send(XmppChat.createSystemMessage("### You will get the re-created lobby on the finish."), personaId);
+			}
+			return null;
+		}
 		return null;
 	}
 }
