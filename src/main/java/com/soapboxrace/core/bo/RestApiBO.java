@@ -1,15 +1,18 @@
 package com.soapboxrace.core.bo;
 
 import java.math.BigInteger;
+import java.net.URI;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 
 import com.soapboxrace.core.bo.util.StringListConverter;
+import com.soapboxrace.core.dao.APITokenDAO;
 import com.soapboxrace.core.dao.BanDAO;
 import com.soapboxrace.core.dao.CarClassesDAO;
 import com.soapboxrace.core.dao.CustomCarDAO;
@@ -22,6 +25,7 @@ import com.soapboxrace.core.dao.RecordsDAO;
 import com.soapboxrace.core.dao.ReportDAO;
 import com.soapboxrace.core.dao.TreasureHuntDAO;
 import com.soapboxrace.core.dao.UserDAO;
+import com.soapboxrace.core.jpa.APITokenEntity;
 import com.soapboxrace.core.jpa.BanEntity;
 import com.soapboxrace.core.jpa.CarClassesEntity;
 import com.soapboxrace.core.jpa.CarNameEntity;
@@ -38,6 +42,7 @@ import com.soapboxrace.core.jpa.ProfileIconEntity;
 import com.soapboxrace.core.jpa.RecordsEntity;
 import com.soapboxrace.core.jpa.TreasureHuntEntity;
 import com.soapboxrace.core.jpa.UserEntity;
+import com.soapboxrace.jaxb.http.APITokenResponse;
 import com.soapboxrace.jaxb.http.ArrayOfCarClassHash;
 import com.soapboxrace.jaxb.http.ArrayOfCarNameTop;
 import com.soapboxrace.jaxb.http.ArrayOfEvents;
@@ -45,6 +50,7 @@ import com.soapboxrace.jaxb.http.ArrayOfMMLobbies;
 import com.soapboxrace.jaxb.http.ArrayOfPersonaBase;
 import com.soapboxrace.jaxb.http.ArrayOfProfileIcon;
 import com.soapboxrace.jaxb.http.ArrayOfRaceWithTime;
+import com.soapboxrace.jaxb.http.ArrayOfServerInfo;
 import com.soapboxrace.jaxb.http.ChangePassword;
 import com.soapboxrace.jaxb.http.MostPopularRaces;
 import com.soapboxrace.jaxb.http.MostPopularRaces.Race;
@@ -57,6 +63,7 @@ import com.soapboxrace.jaxb.http.TopProfileScore;
 import com.soapboxrace.jaxb.http.TopProfileScore.ProfileDataScore;
 import com.soapboxrace.jaxb.http.TopProfileTreasureHunt;
 import com.soapboxrace.jaxb.http.TopProfileTreasureHunt.ProfileDataTreasureHunt;
+import com.sbrw.externalBundle.getAPIAuth;
 
 /**
  * Класс для запросов в базу для REST API
@@ -152,6 +159,9 @@ public class RestApiBO {
 	 */
 	@EJB
 	private MatchmakingBO matchmakingBO;
+
+	@EJB
+	private APITokenDAO apiTokenDAO;
 	
 	
 	// ================= Функции выборки ================
@@ -499,6 +509,14 @@ public class RestApiBO {
 	}
 	
 	/**
+	 * Общая информация о сервере и событиях
+	 */
+	public ArrayOfServerInfo getServerStats() {
+		ArrayOfServerInfo serverInfo = new ArrayOfServerInfo();
+		return serverInfo;
+	}
+	
+	/**
 	 * Получить постраничный список профилей
 	 * @param page - страница
 	 * @param onPage - количество профилей на странице
@@ -649,5 +667,49 @@ public class RestApiBO {
 		user.setPassword(newPassword);
 		userDAO.update(user);
 		return new ChangePassword(true, "Password changed");
+	}
+	
+	/**
+	 * Проверка ключа для доступа к API.
+	 * @param key - ключ, присылаемый пользователем
+	 * @param myUri - данные о соединении пользователя
+	 * @return Прохождение проверки (true/false)
+	 */
+	public boolean isKeyVaild(String key, URI myUri) {
+		String keysStr = parameterBO.getStrParam("RESTAPI_KEYS");
+		List<String> keysArray = Arrays.asList(keysStr.split(","));
+		if (keysArray.contains(key)) {
+			System.out.println("### API User with IP " + myUri.getHost() + " has accepted with API Key " + key.substring(0, 4) + ".");
+			return true;
+		}
+		else {
+			System.out.println("### API User with IP " + myUri.getHost() + " has sent wrong Key " + key + ".");
+			return false;
+		}
+	}
+	
+	public APITokenResponse getAPIAuth(URI myUri, String key, boolean isKeyVaild) {
+		APITokenEntity apiTokenEntity = new APITokenEntity();
+		APITokenResponse apiTokenResponse = new APITokenResponse();
+		
+		if (!isKeyVaild) {
+			apiTokenResponse.setToken("");
+	        apiTokenResponse.setErrorCode(275);
+	        return apiTokenResponse;
+		}
+		String token = getAPIAuth.generateToken();
+		
+        String ipAddress = myUri.getHost();
+        apiTokenResponse.setToken(token);
+        apiTokenResponse.setErrorCode(0);
+		LocalDateTime creationTime = LocalDateTime.now();
+		apiTokenEntity.setToken(token);
+		apiTokenEntity.setCreatedTime(creationTime);
+		apiTokenEntity.setIPAddress(ipAddress);
+		apiTokenEntity.setDisabled(false);
+		apiTokenEntity.setMasterPart(key.substring(0, 4));
+		apiTokenDAO.insert(apiTokenEntity);
+		System.out.println("### API User with IP " + ipAddress + " has created the API Token ID " + apiTokenEntity.getId() + ".");
+		return apiTokenResponse;
 	}
 }

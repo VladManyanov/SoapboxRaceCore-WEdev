@@ -33,7 +33,6 @@ import com.soapboxrace.core.jpa.UserEntity;
 import com.soapboxrace.core.xmpp.OpenFireSoapBoxCli;
 import com.soapboxrace.core.xmpp.XmppChat;
 import com.soapboxrace.jaxb.http.CustomCarTrans;
-import com.soapboxrace.jaxb.http.OwnedCarTrans;
 
 @Stateless
 public class TeamsBO {
