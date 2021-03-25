@@ -35,6 +35,7 @@ public class ServerInfoEntity {
 	private String ownerList;
 	private Integer numberOfRegistered;
 	private Integer onlineNumber;
+	private Integer onlinePeak;
 	private String allowedCountries;
 	private String newsUrl;
 	private Boolean rwacAllow;
@@ -210,6 +211,14 @@ public class ServerInfoEntity {
 
 	public void setMaxOnlinePlayers(Integer maxOnlinePlayers) {
 		this.maxOnlinePlayers = maxOnlinePlayers;
+	}
+	
+	public Integer getOnlinePeak() {
+		return onlinePeak;
+	}
+
+	public void setOnlinePeak(Integer onlinePeak) {
+		this.onlinePeak = onlinePeak;
 	}
 
 }

@@ -11,6 +11,7 @@ import javax.ejb.Timer;
 import javax.ejb.TimerConfig;
 import javax.ejb.TimerService;
 
+import com.soapboxrace.core.bo.util.CarClassType;
 import com.soapboxrace.core.dao.CarClassesDAO;
 import com.soapboxrace.core.dao.EventDataDAO;
 import com.soapboxrace.core.dao.LobbyDAO;
@@ -166,30 +167,30 @@ public class EventResultBO {
 	
 	public String getCarClassLetter(int carClassHash) {
 		String letter = "";
-		switch(carClassHash) {
-		case 872416321:
+		switch(CarClassType.valueOf(carClassHash)) {
+		case E_CLASS:
 			letter = "E";
 			break;
-		case 415909161:
+		case D_CLASS:
 			letter = "D";
 			break;
-		case 1866825865:
+		case C_CLASS:
 			letter = "C";
 			break;
-		case -406473455:
+		case B_CLASS:
 			letter = "B";
 			break;
-		case -405837480:
+		case A_CLASS:
 			letter = "A";
 			break;
-		case -2142411446:
+		case S_CLASS:
 			letter = "S";
 			break;
-		case 607077938:
+		case OPEN_CLASS:
 			letter = "ALL";
 			break;
 		default:
-			letter = "NPC";
+			letter = "MISC";
 			break;
 		}
 		return letter;
@@ -199,25 +200,25 @@ public class EventResultBO {
 		int carClassHash = 0;
 		switch(carClassLetter) {
 		case "E":
-			carClassHash = 872416321;
+			carClassHash = CarClassType.E_CLASS.getId();
 			break;
 		case "D":
-			carClassHash = 415909161;
+			carClassHash = CarClassType.D_CLASS.getId();
 			break;
 		case "C":
-			carClassHash = 1866825865;
+			carClassHash = CarClassType.C_CLASS.getId();
 			break;
 		case "B":
-			carClassHash = -406473455;
+			carClassHash = CarClassType.B_CLASS.getId();
 			break;
 		case "A":
-			carClassHash = -405837480;
+			carClassHash = CarClassType.A_CLASS.getId();
 			break;
 		case "S":
-			carClassHash = -2142411446;
+			carClassHash = CarClassType.S_CLASS.getId();
 			break;
 		case "ALL":
-			carClassHash = 607077938;
+			carClassHash = CarClassType.OPEN_CLASS.getId();
 			break;
 		default:
 			carClassHash = 0;

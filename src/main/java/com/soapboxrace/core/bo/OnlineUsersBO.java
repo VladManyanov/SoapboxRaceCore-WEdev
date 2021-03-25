@@ -7,20 +7,15 @@ import javax.ejb.Singleton;
 import javax.ejb.LockType;
 
 import com.soapboxrace.core.bo.ParameterBO;
-import com.soapboxrace.core.xmpp.OpenFireRestApiCli;
 import com.soapboxrace.core.xmpp.OpenFireSoapBoxCli;
 import com.soapboxrace.core.bo.util.DiscordWebhook;
 import com.soapboxrace.core.dao.PersonaDAO;
-import com.soapboxrace.core.dao.PersonaPresenceDAO;
 import com.soapboxrace.core.dao.ServerInfoDAO;
 import com.soapboxrace.core.dao.TokenSessionDAO;
 import com.soapboxrace.core.jpa.ServerInfoEntity;
 
 @Singleton
 public class OnlineUsersBO {
-
-	@EJB
-	OpenFireRestApiCli openFireRestApiCli;
 	
 	@EJB
 	private OpenFireSoapBoxCli openFireSoapBoxCli;
@@ -35,32 +30,41 @@ public class OnlineUsersBO {
 	private DiscordWebhook discordBot;
 	
 	@EJB
-	private PersonaPresenceDAO personaPresenceDAO;
-	
-	@EJB
 	private PersonaDAO personaDAO;
 	
 	@EJB
 	private ServerInfoDAO serverInfoDAO;
+	
+	@EJB
+	private TokenSessionDAO tokenSessionDAO;
     
 	@Schedule(minute = "*/1", hour = "*", persistent = false)
 	@Lock(LockType.READ)
 	public void updateOnlineUsers() {
 		ServerInfoEntity serverInfoEntity = serverInfoDAO.findInfo();
-		serverInfoEntity.setOnlineNumber(openFireRestApiCli.getTotalOnlineUsers());
+		int onlineCount = tokenSessionDAO.getUsersOnlineCount();
+		serverInfoEntity.setOnlineNumber(onlineCount);
+		if (onlineCount > serverInfoEntity.getOnlinePeak()) {
+			serverInfoEntity.setOnlinePeak(onlineCount);
+		}
 		serverInfoDAO.update(serverInfoEntity);
 	}
 	
 	@Schedule(minute = "*/10", hour = "*", persistent = false)
 	public void OnlineCountDiscord() {
 		if (parameterBO.getBoolParam("DISCORD_ONLINECOUNT")) {
-			ServerInfoEntity serverInfoEntity = serverInfoDAO.findInfo();
-			int onlineCount = serverInfoEntity.getOnlineNumber();
+			int onlineCount = getOnlinePlayersCount();
 			String message = ":heavy_minus_sign:"
 	        		+ "\n:cityscape: **|** Сейчас игроков на сервере / Players online now on server: **" + onlineCount + "**"
 			        + "\n:cityscape: **|** Текущая ротация трасс / Track Rotation: **#" + parameterBO.getIntParam("ROTATIONID") + "**";
 			discordBot.sendMessage(message);
 		}
+	}
+	
+	public int getOnlinePlayersCount() {
+		ServerInfoEntity serverInfoEntity = serverInfoDAO.findInfo();
+		int onlineCount = serverInfoEntity.getOnlineNumber();
+		return onlineCount;
 	}
 	
 	// Give a money to random player online, every hour (can be unoptimized!)

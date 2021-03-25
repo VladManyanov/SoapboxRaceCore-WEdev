@@ -23,6 +23,7 @@ import com.soapboxrace.core.dao.PersonaDAO;
 import com.soapboxrace.core.dao.ProductDAO;
 import com.soapboxrace.core.dao.RecordsDAO;
 import com.soapboxrace.core.dao.ReportDAO;
+import com.soapboxrace.core.dao.ServerInfoDAO;
 import com.soapboxrace.core.dao.TreasureHuntDAO;
 import com.soapboxrace.core.dao.UserDAO;
 import com.soapboxrace.core.jpa.APITokenEntity;
@@ -40,6 +41,7 @@ import com.soapboxrace.core.jpa.PersonaTopTreasureHunt;
 import com.soapboxrace.core.jpa.ProductEntity;
 import com.soapboxrace.core.jpa.ProfileIconEntity;
 import com.soapboxrace.core.jpa.RecordsEntity;
+import com.soapboxrace.core.jpa.ServerInfoEntity;
 import com.soapboxrace.core.jpa.TreasureHuntEntity;
 import com.soapboxrace.core.jpa.UserEntity;
 import com.soapboxrace.jaxb.http.APITokenResponse;
@@ -162,6 +164,9 @@ public class RestApiBO {
 
 	@EJB
 	private APITokenDAO apiTokenDAO;
+	
+	@EJB
+	private ServerInfoDAO serverInfoDAO;
 	
 	
 	// ================= Функции выборки ================
@@ -513,6 +518,20 @@ public class RestApiBO {
 	 */
 	public ArrayOfServerInfo getServerStats() {
 		ArrayOfServerInfo serverInfo = new ArrayOfServerInfo();
+		ServerInfoEntity serverInfoEntity = serverInfoDAO.findInfo();
+		
+		serverInfo.setPlayersCount(serverInfoEntity.getOnlineNumber());
+		serverInfo.setPlayersRegistered(serverInfoEntity.getNumberOfRegistered());
+		serverInfo.setPlayersPeak(serverInfoEntity.getOnlinePeak()); 
+		
+		int bonusClass = parameterBO.getIntParam("CLASSBONUS_CARCLASSHASH");
+		if (bonusClass == 0) {serverInfo.setBonusClass("N/A");}
+		else {serverInfo.setBonusClass(eventResultBO.getCarClassLetter(bonusClass));}
+		
+		serverInfo.setTrackRotation(parameterBO.getIntParam("ROTATIONID"));
+		// IDs starts from 0, so sequence ID #0 should be displayed as "1"
+		serverInfo.setChallengeSeriesEvent(parameterBO.getIntParam("DAILYSERIES_CURRENTID") + 1); 
+
 		return serverInfo;
 	}
 	
