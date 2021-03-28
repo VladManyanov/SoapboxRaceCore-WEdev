@@ -220,7 +220,6 @@ public class MatchMaking {
 			System.out.println("### /acceptinvite newlobby");
 		}
 		tokenSessionBO.setActiveLobbyId(securityToken, lobbyInviteId);
-		tokenSessionBO.setSearchEventId(activePersonaId, 0);
 		System.out.println("### /acceptinvite");
 		return lobbyBO.acceptinvite(activePersonaId, lobbyInviteId);
 	}

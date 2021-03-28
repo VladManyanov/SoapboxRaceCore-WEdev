@@ -274,15 +274,10 @@ public class LobbyCountdownBO {
 	
 	// Lock the lobby for Race Again feature, so players could be able to populate that lobby again
 	public void lockLobby(LobbyEntity lobbyEntity) {
-		if (parameterBO.getBoolParam("ENABLE_FINISHLOBBY")) {
-			lobbyEntity.setStarted(true);
-			lobbyEntity.setLobbyDateTimeStart(null);
-			lobbyEntrantDAO.deleteByLobby(lobbyEntity);
-			lobbyDao.update(lobbyEntity);
-		}
-		else {
-			endLobby(lobbyEntity);
-		}
+		lobbyEntity.setStarted(true);
+		lobbyEntity.setLobbyDateTimeStart(null);
+		lobbyEntrantDAO.deleteByLobby(lobbyEntity);
+		lobbyDao.update(lobbyEntity);
 	}
 	
 	// Remove the lobby information from DB, we don't need it anymore
