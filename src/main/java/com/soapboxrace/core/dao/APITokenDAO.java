@@ -1,12 +1,12 @@
 package com.soapboxrace.core.dao;
 
-import java.net.URI;
 import java.time.LocalDateTime;
 import java.util.List;
 
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
 import javax.persistence.TypedQuery;
 
 import com.soapboxrace.core.dao.util.BaseDAO;
@@ -20,11 +20,10 @@ public class APITokenDAO extends BaseDAO<APITokenEntity> {
 		this.entityManager = entityManager;
 	}
 	
-	public boolean verifyToken(String token, URI uri) {
+	public boolean verifyToken(String token, String ipAddress) {
 		TypedQuery<APITokenEntity> query = entityManager.createNamedQuery("APITokenEntity.findByToken", APITokenEntity.class);
 		query.setParameter("token", token);
-
-		String ipAddress = uri.getHost();
+		
 		List<APITokenEntity> resultList = query.getResultList();
 		if (resultList == null || resultList.isEmpty()) {
 			System.out.println("### API Token " + token + " does not exist on DB, user IP: " + ipAddress);
@@ -47,6 +46,13 @@ public class APITokenDAO extends BaseDAO<APITokenEntity> {
 		update(apiTokenEntity);
 		System.out.println("### API Token ID " + apiTokenEntity.getId() + " has been disabled, reason: " + reason + ", details: " + details + ".");
 		return false;
+	}
+	
+	public void disableOldTokens(String ipAddress) {
+		Query query = entityManager.createNamedQuery("APITokenEntity.disableTokenByIP");
+		query.setParameter("ipAddress", ipAddress);
+		query.executeUpdate();
+		System.out.println("### API old tokens from IP " + ipAddress + " has been disabled.");
 	}
 
 }

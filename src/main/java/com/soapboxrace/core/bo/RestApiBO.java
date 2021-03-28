@@ -1,7 +1,6 @@
 package com.soapboxrace.core.bo;
 
 import java.math.BigInteger;
-import java.net.URI;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -477,8 +476,7 @@ public class RestApiBO {
 	 */
 	public boolean carVersionCheck (int actualCarVersion, int recordCarVersion) {
 		boolean isCarVersionVaild = true;
-		int serverCarVersionValue = actualCarVersion;
-		if (serverCarVersionValue == recordCarVersion) {isCarVersionVaild = true;}
+		if (actualCarVersion == recordCarVersion) {isCarVersionVaild = true;}
 		else {
 			isCarVersionVaild = false;
 		}
@@ -694,20 +692,20 @@ public class RestApiBO {
 	 * @param myUri - данные о соединении пользователя
 	 * @return Прохождение проверки (true/false)
 	 */
-	public boolean isKeyVaild(String key, URI myUri) {
+	public boolean isKeyVaild(String key, String ipAddress) {
 		String keysStr = parameterBO.getStrParam("RESTAPI_KEYS");
 		List<String> keysArray = Arrays.asList(keysStr.split(","));
 		if (keysArray.contains(key)) {
-			System.out.println("### API User with IP " + myUri.getHost() + " has accepted with API Key " + key.substring(0, 4) + ".");
+			System.out.println("### API User with IP " + ipAddress + " has accepted with API Key " + key.substring(0, 4) + ".");
 			return true;
 		}
 		else {
-			System.out.println("### API User with IP " + myUri.getHost() + " has sent wrong Key " + key + ".");
+			System.out.println("### API User with IP " + ipAddress + " has sent wrong Key " + key + ".");
 			return false;
 		}
 	}
 	
-	public APITokenResponse getAPIAuth(URI myUri, String key, boolean isKeyVaild) {
+	public APITokenResponse getAPIAuth(String ipAddress, String key, boolean isKeyVaild) {
 		APITokenEntity apiTokenEntity = new APITokenEntity();
 		APITokenResponse apiTokenResponse = new APITokenResponse();
 		
@@ -717,8 +715,8 @@ public class RestApiBO {
 	        return apiTokenResponse;
 		}
 		String token = getAPIAuth.generateToken();
+		apiTokenDAO.disableOldTokens(ipAddress);
 		
-        String ipAddress = myUri.getHost();
         apiTokenResponse.setToken(token);
         apiTokenResponse.setErrorCode(0);
 		LocalDateTime creationTime = LocalDateTime.now();

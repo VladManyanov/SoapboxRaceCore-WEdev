@@ -41,7 +41,7 @@ public class ArrayOfMMLobbies {
 	private int playercount_e;
 	@XmlElement(name = "PlayerCount_Misc")
 	private int playercount_misc;
-	@XmlElement(name = "ActiveLobbies")
+	@XmlElement(name = "ActiveLobby")
 	private List<MMLobbyInfo> activelobbies;
 	
 	public ArrayOfMMLobbies() {

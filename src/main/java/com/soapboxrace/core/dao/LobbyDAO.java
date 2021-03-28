@@ -6,6 +6,7 @@ import java.util.List;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
+import javax.persistence.FlushModeType;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 import javax.persistence.TypedQuery;
@@ -39,6 +40,7 @@ public class LobbyDAO extends BaseDAO<LobbyEntity> {
 		System.out.println("### findAllMPLobbies, searchStage: " + searchStage);
 		Date dateNow = new Date();
 		Date datePast = new Date(dateNow.getTime() - (parameterBO.getIntParam("LOBBY_TIME") - 8000)); // Don't count the last 8 seconds of lobby life-time
+		entityManager.setFlushMode(FlushModeType.COMMIT);
 		
 		TypedQuery<LobbyEntity> query = entityManager.createQuery(getSqlLobbySearch(raceFilter, searchStage, carClassHash, isSClassFilterActive), LobbyEntity.class);
 		System.out.println("### findAllMPLobbies, query prepare end");

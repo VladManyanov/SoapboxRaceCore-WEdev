@@ -8,6 +8,8 @@ import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 import javax.persistence.TypedQuery;
 
+import javax.persistence.FlushModeType;
+
 import com.soapboxrace.core.dao.util.BaseDAO;
 import com.soapboxrace.core.jpa.CarClassesEntity;
 
@@ -24,7 +26,8 @@ public class CarClassesDAO extends BaseDAO<CarClassesEntity> {
 	}
 
 	public CarClassesEntity findByHash(int hash) {
-		TypedQuery<CarClassesEntity> query = entityManager.createQuery("SELECT obj FROM CarClassesEntity obj WHERE obj.hash = :hash", CarClassesEntity.class);
+		entityManager.setFlushMode(FlushModeType.COMMIT);
+		TypedQuery<CarClassesEntity> query = entityManager.createNamedQuery("CarClassesEntity.findByHash", CarClassesEntity.class);
 		query.setParameter("hash", hash);
 		return query.getSingleResult();
 	}

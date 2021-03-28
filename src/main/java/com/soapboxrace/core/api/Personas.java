@@ -340,8 +340,8 @@ public class Personas {
 	// TODO Move the method, temporary place
 	public String forceCheckObsoleteRecords(@FormParam("adminToken") String adminToken) {
 		if (parameterBO.getStrParam("TOKEN_ADMIN").equals(adminToken)) {
-			recordsBO.markObsoleteRecords();
-			return "Records has been checked.";
+			recordsBO.markObsoleteRecords(true);
+			return "Records check process has been started.";
 		}
 		return "ERROR: invalid token";
 	}

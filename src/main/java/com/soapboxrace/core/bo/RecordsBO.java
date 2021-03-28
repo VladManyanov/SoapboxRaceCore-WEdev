@@ -4,8 +4,14 @@ import java.math.BigInteger;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import javax.annotation.Resource;
 import javax.ejb.EJB;
+import javax.ejb.Schedule;
 import javax.ejb.Stateless;
+import javax.ejb.Timeout;
+import javax.ejb.Timer;
+import javax.ejb.TimerConfig;
+import javax.ejb.TimerService;
 
 import com.soapboxrace.core.bo.util.DiscordWebhook;
 import com.soapboxrace.core.bo.util.EventModeType;
@@ -69,6 +75,9 @@ public class RecordsBO {
 	
 	@EJB
 	private RestApiBO restApiBO;
+	
+	@Resource
+    private TimerService timerService;
 
 	public void submitRecord(EventEntity eventEntity, PersonaEntity personaEntity, EventDataEntity eventDataEntity, CustomCarEntity customCarEntity, 
 			CarClassesEntity carClassesEntity) {
@@ -247,20 +256,37 @@ public class RecordsBO {
 	}
 	
 	// Change the status of out-dated records and mark them as "obsolete"
-	// Can cause heavy load when starting for first time
-	// FIXME Needs to avoid timeout somehow
-//	@Schedule(dayOfWeek = "TUE", persistent = false)
-	public void markObsoleteRecords() {
-		System.out.println("### Obsolete records check process started...");
+	// Execute this check every 2nd day on 02:00, takes some minutes to process
+	@Schedule(dayOfMonth = "2", hour="2", persistent = false)
+	public void markObsoleteRecords(boolean uncheckRecords) {
+		System.out.println("### Obsolete records check process block started...");
+		if (uncheckRecords) {
+			recordsDAO.uncheckAllRecords(); // Reset "check" state for all records
+		}
 		List<RecordsEntity> actualRecords = recordsDAO.checkAllRecords();
-		for (RecordsEntity record : actualRecords) {
-			boolean isCarVersionActual = restApiBO.carVersionCheck(carClassesDAO.findByHash(record.getCarPhysicsHash()).getCarVersion(), record.getCarVersion());
-			if (!isCarVersionActual) { // Mark the record as Obsolete
-				record.setIsObsolete(true);
+		System.out.println("### Obsolete records check process, records amount: " + actualRecords.size() + ".");
+		if (!actualRecords.isEmpty()) {
+			for (RecordsEntity record : actualRecords) {
+				CarClassesEntity carClassesEntity = carClassesDAO.findByHash(record.getCarPhysicsHash());
+				boolean isCarVersionActual = restApiBO.carVersionCheck(carClassesEntity.getCarVersion(), record.getCarVersion());
+				if (!isCarVersionActual) { // Mark the record as Obsolete
+					record.setIsObsolete(true);
+				}
+				record.setObsoleteChecked(true);
 				recordsDAO.update(record);
 			}
+			System.out.println("### Obsolete records check process block ended.");
+			TimerConfig timerConfig = new TimerConfig(null, false); // Must be not-persistent
+		    timerService.createSingleActionTimer(1, timerConfig); // Loop with 50,000 records on each block (to avoid Java Heap issues)
 		}
-		System.out.println("### Obsolete records check process ended.");
+		else {
+			System.out.println("### Obsolete records check process finished.");
+		}
+	}
+	
+	@Timeout
+	public void markObsoleteRecordsTimer(Timer timer) {
+		markObsoleteRecords(false);
 	}
 	
 	// TrackMania-like score points system

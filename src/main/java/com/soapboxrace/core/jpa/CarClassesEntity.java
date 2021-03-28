@@ -5,10 +5,16 @@ import java.io.Serializable;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
+import javax.persistence.NamedQueries;
+import javax.persistence.NamedQuery;
 import javax.persistence.Table;
 
 @Entity
 @Table(name = "CAR_CLASSES")
+@NamedQueries({ 
+        @NamedQuery(name = "CarClassesEntity.findByHash", //
+            query = "SELECT obj FROM CarClassesEntity obj WHERE obj.hash = :hash") //
+})
 public class CarClassesEntity implements Serializable {
 	private static final long serialVersionUID = 1L;
 

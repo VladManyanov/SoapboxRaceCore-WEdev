@@ -5,6 +5,7 @@ import java.util.List;
 
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
+import javax.persistence.FlushModeType;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 import javax.persistence.TypedQuery;
@@ -37,10 +38,18 @@ public class RecordsDAO extends BaseDAO<RecordsEntity> {
 	
 	// Take all un-checked records to check for actual car version
 	public List<RecordsEntity> checkAllRecords() {
+		entityManager.setFlushMode(FlushModeType.COMMIT);
 		TypedQuery<RecordsEntity> query = entityManager.createNamedQuery("RecordsEntity.checkAllRecords", RecordsEntity.class);
+		query.setMaxResults(50000);
 
 		List<RecordsEntity> resultList = query.getResultList();
 		return resultList;
+	}
+	
+	// Un-check all records, so they can be obsolete-checked again
+	public void uncheckAllRecords() {
+		Query query = entityManager.createNamedQuery("RecordsEntity.uncheckAllRecords");
+		query.executeUpdate();
 	}
 
 	public RecordsEntity getWRRecord(EventEntity event, boolean powerUps, int carClassHash, Long timeMS) {

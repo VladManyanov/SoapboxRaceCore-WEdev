@@ -15,6 +15,8 @@ import javax.persistence.Table;
 @NamedQueries({ //
 @NamedQuery(name = "APITokenEntity.findByToken", //
 		query = "SELECT obj FROM APITokenEntity obj WHERE obj.token = :token "),
+@NamedQuery(name = "APITokenEntity.disableTokenByIP", //
+        query = "UPDATE APITokenEntity obj SET obj.disabled = true WHERE obj.ipAddress = :ipAddress ")
 })
 public class APITokenEntity {
 

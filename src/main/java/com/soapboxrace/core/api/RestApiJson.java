@@ -3,6 +3,7 @@ package com.soapboxrace.core.api;
 import java.net.URI;
 
 import javax.ejb.EJB;
+import javax.servlet.http.HttpServletRequest;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -11,7 +12,6 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriInfo;
 
 import com.soapboxrace.core.bo.ParameterBO;
 import com.soapboxrace.core.bo.RestApiBO;
@@ -36,7 +36,7 @@ public class RestApiJson {
 	private APITokenDAO apiTokenDAO;
 	
 	@Context
-	UriInfo uri;
+	private HttpServletRequest sr;
 	
 	// ===================== Начальная авторизация =======================
 
@@ -48,9 +48,9 @@ public class RestApiJson {
 	@Path("apiAuth")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response apiAuth(@NotNull @QueryParam("key") String key) {
-		URI myUri = uri.getBaseUri();
-		boolean isKeyVaild = bo.isKeyVaild(key, myUri);
-		return Response.ok(bo.getAPIAuth(myUri, key, isKeyVaild)).build();
+		String ipAddress = sr.getRemoteAddr();
+		boolean isKeyVaild = bo.isKeyVaild(key, ipAddress);
+		return Response.ok(bo.getAPIAuth(ipAddress, key, isKeyVaild)).build();
 	}
 	
 	// ===================== Страницы =======================
@@ -62,7 +62,7 @@ public class RestApiJson {
 	@Path("MatchmakingWebStats")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response mmWebStats(@NotNull @QueryParam("token") String token) {
-		if (!apiTokenDAO.verifyToken(token, uri.getBaseUri())) {
+		if (!apiTokenDAO.verifyToken(token, sr.getRemoteAddr())) {
 			String accessDenied = parameterBO.getStrParam("RESTAPI_FAILURELINK");
 			return Response.temporaryRedirect(URI.create(accessDenied)).build();
 		}
@@ -76,7 +76,7 @@ public class RestApiJson {
 	@Path("ServerStats")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response serverStats(@NotNull @QueryParam("token") String token) {
-		if (!apiTokenDAO.verifyToken(token, uri.getBaseUri())) {
+		if (!apiTokenDAO.verifyToken(token, sr.getRemoteAddr())) {
 			String accessDenied = parameterBO.getStrParam("RESTAPI_FAILURELINK");
 			return Response.temporaryRedirect(URI.create(accessDenied)).build();
 		}

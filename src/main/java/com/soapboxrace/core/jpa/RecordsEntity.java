@@ -37,7 +37,9 @@ import javax.persistence.Table;
                 + "ORDER BY obj.timeMS "),//
 
 @NamedQuery(name = "RecordsEntity.checkAllRecords", 
-        query = "SELECT obj FROM RecordsEntity obj WHERE obj.userBan = false AND obj.isObsolete = false "),//
+        query = "SELECT obj FROM RecordsEntity obj WHERE obj.userBan = false AND obj.isObsolete = false AND obj.obsoleteChecked = false "),//
+@NamedQuery(name = "RecordsEntity.uncheckAllRecords", 
+        query = "UPDATE RecordsEntity obj SET obj.obsoleteChecked = false "),//
 
 })
 public class RecordsEntity {
@@ -72,6 +74,7 @@ public class RecordsEntity {
 	private boolean userBan;
 	private boolean training;
 	private boolean isObsolete;
+	private boolean obsoleteChecked;
 	
 	@ManyToOne
 	@JoinColumn(name = "EVENTPOWERUPSID", referencedColumnName = "ID", foreignKey = @ForeignKey(name = "RECORDS_EVENT_POWERUPS_FK"))
@@ -311,6 +314,14 @@ public class RecordsEntity {
 
 	public void setIsObsolete(boolean isObsolete) {
 		this.isObsolete = isObsolete;
+	}
+	
+	public boolean ObsoleteChecked() {
+		return obsoleteChecked;
+	}
+
+	public void setObsoleteChecked(boolean obsoleteChecked) {
+		this.obsoleteChecked = obsoleteChecked;
 	}
 	
 }

@@ -3,6 +3,7 @@ package com.soapboxrace.core.api;
 import java.net.URI;
 
 import javax.ejb.EJB;
+import javax.servlet.http.HttpServletRequest;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -11,7 +12,6 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriInfo;
 
 import com.soapboxrace.core.bo.ParameterBO;
 import com.soapboxrace.core.bo.RestApiBO;
@@ -37,7 +37,7 @@ public class RestApi {
 	private APITokenDAO apiTokenDAO;
 	
 	@Context
-	UriInfo uri;
+	private HttpServletRequest sr;
 	
 	// ===================== Начальная авторизация =======================
 
@@ -49,9 +49,9 @@ public class RestApi {
 	@Path("apiAuth")
 	@Produces(MediaType.APPLICATION_XML)
 	public Response apiAuth(@NotNull @QueryParam("key") String key) {
-		URI myUri = uri.getBaseUri();
-		boolean isKeyVaild = bo.isKeyVaild(key, myUri);
-		return Response.ok(bo.getAPIAuth(myUri, key, isKeyVaild)).build();
+		String ipAddress = sr.getRemoteAddr();
+		boolean isKeyVaild = bo.isKeyVaild(key, ipAddress);
+		return Response.ok(bo.getAPIAuth(ipAddress, key, isKeyVaild)).build();
 	}
 	
 	// ===================== Страницы =======================
@@ -64,7 +64,7 @@ public class RestApi {
 	@Path("GetTopScore")
 	@Produces(MediaType.APPLICATION_XML)
 	public Response topScores(@NotNull @QueryParam("onpage") int onpage, @QueryParam("token") String token) {
-		if (!apiTokenDAO.verifyToken(token, uri.getBaseUri())) {
+		if (!apiTokenDAO.verifyToken(token, sr.getRemoteAddr())) {
 			String accessDenied = parameterBO.getStrParam("RESTAPI_FAILURELINK");
 			return Response.temporaryRedirect(URI.create(accessDenied)).build();
 		}
@@ -78,7 +78,7 @@ public class RestApi {
 	@Path("GetTopRacers")
 	@Produces(MediaType.APPLICATION_XML)
 	public Response topRaces(@NotNull @QueryParam("onpage") int onPage, @QueryParam("token") String token) {
-		if (!apiTokenDAO.verifyToken(token, uri.getBaseUri())) {
+		if (!apiTokenDAO.verifyToken(token, sr.getRemoteAddr())) {
 			String accessDenied = parameterBO.getStrParam("RESTAPI_FAILURELINK");
 			return Response.temporaryRedirect(URI.create(accessDenied)).build();
 		}
@@ -92,7 +92,7 @@ public class RestApi {
 	@Path("GetTopTreasureHunt")
 	@Produces(MediaType.APPLICATION_XML)
 	public Response topTreasureHunt(@NotNull @QueryParam("onpage") int onPage, @QueryParam("token") String token) {
-		if (!apiTokenDAO.verifyToken(token, uri.getBaseUri())) {
+		if (!apiTokenDAO.verifyToken(token, sr.getRemoteAddr())) {
 			String accessDenied = parameterBO.getStrParam("RESTAPI_FAILURELINK");
 			return Response.temporaryRedirect(URI.create(accessDenied)).build();
 		}
@@ -105,7 +105,7 @@ public class RestApi {
 	@Path("GetPopularRaces")
 	@Produces(MediaType.APPLICATION_XML)
 	public Response mostPupularRace(@NotNull @QueryParam("token") String token) {
-		if (!apiTokenDAO.verifyToken(token, uri.getBaseUri())) {
+		if (!apiTokenDAO.verifyToken(token, sr.getRemoteAddr())) {
 			String accessDenied = parameterBO.getStrParam("RESTAPI_FAILURELINK");
 			return Response.temporaryRedirect(URI.create(accessDenied)).build();
 		}
@@ -119,7 +119,7 @@ public class RestApi {
 	@Path("GetPopularCarClasses")
 	@Produces(MediaType.APPLICATION_XML)
 	public Response mostPupularCarClass(@NotNull @QueryParam("onpage") int onPage, @QueryParam("token") String token) {
-		if (!apiTokenDAO.verifyToken(token, uri.getBaseUri())) {
+		if (!apiTokenDAO.verifyToken(token, sr.getRemoteAddr())) {
 			String accessDenied = parameterBO.getStrParam("RESTAPI_FAILURELINK");
 			return Response.temporaryRedirect(URI.create(accessDenied)).build();
 		}
@@ -133,7 +133,7 @@ public class RestApi {
 	@Path("GetPopularProfileIcons")
 	@Produces(MediaType.APPLICATION_XML)
 	public Response mostPupularProfileIcon(@NotNull @QueryParam("onpage") int onPage, @QueryParam("token") String token) {
-		if (!apiTokenDAO.verifyToken(token, uri.getBaseUri())) {
+		if (!apiTokenDAO.verifyToken(token, sr.getRemoteAddr())) {
 			String accessDenied = parameterBO.getStrParam("RESTAPI_FAILURELINK");
 			return Response.temporaryRedirect(URI.create(accessDenied)).build();
 		}
@@ -147,7 +147,7 @@ public class RestApi {
 	@Path("GetPopularCarName")
 	@Produces(MediaType.APPLICATION_XML)
 	public Response mostPopularCarName(@NotNull @QueryParam("onpage") int onPage, @QueryParam("token") String token) {
-		if (!apiTokenDAO.verifyToken(token, uri.getBaseUri())) {
+		if (!apiTokenDAO.verifyToken(token, sr.getRemoteAddr())) {
 			String accessDenied = parameterBO.getStrParam("RESTAPI_FAILURELINK");
 			return Response.temporaryRedirect(URI.create(accessDenied)).build();
 		}
@@ -161,7 +161,7 @@ public class RestApi {
 	@Produces(MediaType.APPLICATION_XML)
 	public Response racesEvent(@NotNull @QueryParam("eventid") int eventid, @QueryParam("powerups") boolean powerups, @QueryParam("carclass") String carclass, 
 			@QueryParam("oldrecords") boolean oldRecords, @QueryParam("page") int page, @QueryParam("onpage") int onPage, @QueryParam("token") String token) {
-		if (!apiTokenDAO.verifyToken(token, uri.getBaseUri())) {
+		if (!apiTokenDAO.verifyToken(token, sr.getRemoteAddr())) {
 			String accessDenied = parameterBO.getStrParam("RESTAPI_FAILURELINK");
 			return Response.temporaryRedirect(URI.create(accessDenied)).build();
 		}
@@ -175,7 +175,7 @@ public class RestApi {
 	@Produces(MediaType.APPLICATION_XML)
 	public Response racesPersona(@NotNull @QueryParam("eventid") int eventid, @QueryParam("powerups") boolean powerups, @QueryParam("personaname") String personaname, 
 			@QueryParam("oldrecords") boolean oldRecords, @QueryParam("page") int page, @QueryParam("onpage") int onPage, @QueryParam("token") String token) {
-		if (!apiTokenDAO.verifyToken(token, uri.getBaseUri())) {
+		if (!apiTokenDAO.verifyToken(token, sr.getRemoteAddr())) {
             String accessDenied = parameterBO.getStrParam("RESTAPI_FAILURELINK");
             return Response.temporaryRedirect(URI.create(accessDenied)).build();
         }
@@ -189,7 +189,7 @@ public class RestApi {
 	@Produces(MediaType.APPLICATION_XML)
 	public Response racesEventByCar(@NotNull @QueryParam("eventid") int eventid, @QueryParam("powerups") boolean powerups, @QueryParam("carmodel") String carmodel, 
 			@QueryParam("oldrecords") boolean oldRecords, @QueryParam("page") int page, @QueryParam("onpage") int onPage, @QueryParam("token") String token) {
-		if (!apiTokenDAO.verifyToken(token, uri.getBaseUri())) {
+		if (!apiTokenDAO.verifyToken(token, sr.getRemoteAddr())) {
 			String accessDenied = parameterBO.getStrParam("RESTAPI_FAILURELINK");
 			return Response.temporaryRedirect(URI.create(accessDenied)).build();
 		}
@@ -203,7 +203,7 @@ public class RestApi {
 	@Path("Events")
 	@Produces(MediaType.APPLICATION_XML)
 	public Response races(@NotNull @QueryParam("all") boolean all, @QueryParam("token") String token) {
-		if (!apiTokenDAO.verifyToken(token, uri.getBaseUri())) {
+		if (!apiTokenDAO.verifyToken(token, sr.getRemoteAddr())) {
 			String accessDenied = parameterBO.getStrParam("RESTAPI_FAILURELINK");
 			return Response.temporaryRedirect(URI.create(accessDenied)).build();
 		}
@@ -216,7 +216,7 @@ public class RestApi {
 	@Path("MatchmakingWebStats")
 	@Produces(MediaType.APPLICATION_XML)
 	public Response mmWebStats(@NotNull @QueryParam("token") String token) {
-		if (!apiTokenDAO.verifyToken(token, uri.getBaseUri())) {
+		if (!apiTokenDAO.verifyToken(token, sr.getRemoteAddr())) {
 			String accessDenied = parameterBO.getStrParam("RESTAPI_FAILURELINK");
 			return Response.temporaryRedirect(URI.create(accessDenied)).build();
 		}
@@ -229,7 +229,7 @@ public class RestApi {
 	@Path("ServerStats")
 	@Produces(MediaType.APPLICATION_XML)
 	public Response serverStats(@NotNull @QueryParam("token") String token) {
-		if (!apiTokenDAO.verifyToken(token, uri.getBaseUri())) {
+		if (!apiTokenDAO.verifyToken(token, sr.getRemoteAddr())) {
 			String accessDenied = parameterBO.getStrParam("RESTAPI_FAILURELINK");
 			return Response.temporaryRedirect(URI.create(accessDenied)).build();
 		}
@@ -242,7 +242,7 @@ public class RestApi {
 	@Path("Personas")
 	@Produces(MediaType.APPLICATION_XML)
 	public Response personas(@NotNull @QueryParam("page") int page,@QueryParam("onpage") int onPage, @QueryParam("token") String token) {
-		if (!apiTokenDAO.verifyToken(token, uri.getBaseUri())) {
+		if (!apiTokenDAO.verifyToken(token, sr.getRemoteAddr())) {
 			String accessDenied = parameterBO.getStrParam("RESTAPI_FAILURELINK");
 			return Response.temporaryRedirect(URI.create(accessDenied)).build();
 		}
@@ -255,7 +255,7 @@ public class RestApi {
 	@Path("Persona")
 	@Produces(MediaType.APPLICATION_XML)
 	public Response personas(@NotNull @QueryParam("personaName") String personaName, @QueryParam("token") String token) {
-		if (!apiTokenDAO.verifyToken(token, uri.getBaseUri())) {
+		if (!apiTokenDAO.verifyToken(token, sr.getRemoteAddr())) {
 			String accessDenied = parameterBO.getStrParam("RESTAPI_FAILURELINK");
 			return Response.temporaryRedirect(URI.create(accessDenied)).build();
 		}
@@ -271,7 +271,7 @@ public class RestApi {
 				@QueryParam("personaName") String personaName,
 				@QueryParam("email") String email,
 				@QueryParam("password") String password, @QueryParam("token") String token) {
-		if (!apiTokenDAO.verifyToken(token, uri.getBaseUri())) {
+		if (!apiTokenDAO.verifyToken(token, sr.getRemoteAddr())) {
 			String accessDenied = parameterBO.getStrParam("RESTAPI_FAILURELINK");
 			return Response.temporaryRedirect(URI.create(accessDenied)).build();
 		}
@@ -285,7 +285,7 @@ public class RestApi {
 	@Produces(MediaType.APPLICATION_XML)
 	public Response changePassword(@NotNull @QueryParam("email") String email, @QueryParam("password") String password, 
 			@QueryParam("newPassword") String newPassword, @QueryParam("token") String token) {
-		if (!apiTokenDAO.verifyToken(token, uri.getBaseUri())) {
+		if (!apiTokenDAO.verifyToken(token, sr.getRemoteAddr())) {
 			String accessDenied = parameterBO.getStrParam("RESTAPI_FAILURELINK");
 			return Response.temporaryRedirect(URI.create(accessDenied)).build();
 		}
