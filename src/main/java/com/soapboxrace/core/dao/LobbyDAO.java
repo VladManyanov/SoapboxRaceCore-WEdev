@@ -67,7 +67,7 @@ public class LobbyDAO extends BaseDAO<LobbyEntity> {
 		StringBuilder searchQuery = new StringBuilder();
 		System.out.println("### findAllMPLobbies, getSqlLobbySearch");
 		searchQuery.append("SELECT obj FROM LobbyEntity obj "); // SELECT command
-		searchQuery.append("WHERE obj.started = false AND (obj.lobbyDateTimeStart between :dateTime1 and :dateTime2) OR (obj.lobbyDateTimeStart = null)"); // Lobby should be available to search
+		searchQuery.append("WHERE obj.started = false AND ((obj.lobbyDateTimeStart between :dateTime1 and :dateTime2) OR (obj.lobbyDateTimeStart = null))"); // Lobby should be available to search
 		searchQuery.append("AND obj.isPrivate = false AND obj.event.searchAvailable = true "); // Not private, and the event itself should be allowed for search
 		searchQuery.append(getSqlClassFilter(searchStage, carClassHash, isSClassFilterActive)); // Class restriction
 		searchQuery.append(getSqlRaceFilter(raceFilter, carClassHash)); // Event type action

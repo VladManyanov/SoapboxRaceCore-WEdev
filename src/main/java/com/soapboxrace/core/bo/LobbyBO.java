@@ -119,10 +119,10 @@ public class LobbyBO {
 	}
 
 	public void joinQueueEvent(Long personaId, int eventId, int carClassHash) {
-		System.out.println("joinQueueEvent");
 		PersonaEntity personaEntity = personaDao.findById(personaId);
 		List<LobbyEntity> lobbys = lobbyDao.findByEventStarted(eventId);
-		if (lobbys.size() == 0) {
+		
+		if (lobbys.isEmpty()) {
 			createLobby(personaEntity, eventId, false, false, carClassHash);
 		} else {
 			joinLobby(personaEntity, lobbys, false, carClassHash, parameterBO.getBoolParam("RACENOW_SCLASS_SEPARATE"));
