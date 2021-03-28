@@ -16,7 +16,6 @@ import com.soapboxrace.core.dao.VinylStorageDAO;
 import com.soapboxrace.core.jpa.FriendListEntity;
 import com.soapboxrace.core.jpa.PersonaEntity;
 import com.soapboxrace.core.jpa.PersonaPresenceEntity;
-import com.soapboxrace.core.jpa.TokenSessionEntity;
 import com.soapboxrace.core.xmpp.OpenFireRestApiCli;
 import com.soapboxrace.core.xmpp.OpenFireSoapBoxCli;
 import com.soapboxrace.core.xmpp.XmppChat;
@@ -315,19 +314,6 @@ public class FriendBO {
 				if (!personaPresenceDAO.isUserNotOnline(friend.getUserId())) {
 					sendXmppPresence(personaEntity, presence, friend.getPersonaId());
 				}
-			}
-		}
-	}
-
-//	@Schedule(minute = "*", hour = "*", persistent = false)
-	public void updateOfflinePresence() {
-		List<TokenSessionEntity> findByActive = tokenSessionDAO.findByActive();
-		for (TokenSessionEntity tokenSessionEntity : findByActive) {
-			Long activePersonaId = tokenSessionEntity.getActivePersonaId();
-			if (!openFireRestApiCli.isOnline(activePersonaId)) {
-				PersonaEntity personaEntity = personaBO.getPersonaById(activePersonaId);
-				sendXmppPresenceToAllFriends(personaEntity, 0);
-				personaPresenceDAO.updatePersonaPresence(activePersonaId, 0);
 			}
 		}
 	}

@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
-import java.util.Random;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 
@@ -92,15 +91,14 @@ public class LobbyBO {
         // System.out.println("MM START Time: " + LocalDateTime.now());
 		System.out.println("joinFastLobby");
 		PersonaEntity personaEntity = personaDao.findById(personaId);
-		boolean redis = parameterBO.getBoolParam("REDIS_ENABLE");
 		System.out.println("### joinFastLobby, searchStage: " + searchStage);
 		List<LobbyEntity> lobbys = lobbyDao.findAllMPLobbies(carClassHash, raceFilter, searchStage, isSClassFilterActive);
 		if (lobbys.isEmpty() && searchStage == 1) { // If class-restricted and class group search is not succeed, initiate Priority Class Group search
 			searchStage = 2;
 		}
-		excludeIgnoredEvents(redis, personaEntity, lobbys);
+		excludeIgnoredEvents(personaEntity, lobbys);
 		
-		if (redis && lobbys.isEmpty()) {
+		if (lobbys.isEmpty()) {
 			matchmakingBO.addPlayerToQueue(personaId, carClassHash, raceFilter, 1, searchStage);
 			System.out.println("### searchStage: " + searchStage);
 			int priorityMMTimeout = personaEntity.getPriorityMMTimeout();
@@ -113,13 +111,6 @@ public class LobbyBO {
 				}
 			}
 		}
-//		else {
-//			if (lobbys.isEmpty() && parameterBO.getBoolParam("RACENOW_RANDOMRACES")) {
-//				// System.out.println("MM RANDOM CREATE Time: " + LocalDateTime.now());
-//				System.out.println("createRandomLobby");
-//				createRandomLobby(securityToken, personaId, raceFilter, carClassHash);
-//			}
-//		}
 		if (!lobbys.isEmpty()) {
 			System.out.println("### addFakeToQueue");
 			matchmakingBO.addPlayerToQueue(personaId, carClassHash, raceFilter, 0, 0); // Temporary entry for "Ignore Races" feature
@@ -130,7 +121,6 @@ public class LobbyBO {
 	public void joinQueueEvent(Long personaId, int eventId, int carClassHash) {
 		System.out.println("joinQueueEvent");
 		PersonaEntity personaEntity = personaDao.findById(personaId);
-//		String carDivision = this.carDivision(carClassHash);
 		List<LobbyEntity> lobbys = lobbyDao.findByEventStarted(eventId);
 		if (lobbys.size() == 0) {
 			createLobby(personaEntity, eventId, false, false, carClassHash);
@@ -152,7 +142,7 @@ public class LobbyBO {
 				XMPP_LobbyInviteType lobbyInviteType = new XMPP_LobbyInviteType();
 				lobbyInviteType.setEventId(eventId);
 				lobbyInviteType.setInvitedByPersonaId(personaId);
-				lobbyInviteType.setInviteLifetimeInMilliseconds(60);
+				lobbyInviteType.setInviteLifetimeInMilliseconds(parameterBO.getIntParam("LOBBY_TIME"));
 				lobbyInviteType.setPrivate(true);
 				lobbyInviteType.setLobbyInviteId(lobbys.getId());
 
@@ -187,24 +177,20 @@ public class LobbyBO {
 		lobbyEntity.setStarted(false);
 		lobbyDao.insert(lobbyEntity);
 
-		if (parameterBO.getBoolParam("REDIS_ENABLE") && !isPrivate) { // Queue Matchmaking
-			int playersFounded = 1;
-			for (int i = 1; i <= eventMaxPlayers - 1; i++) { // Search a players for all of the event slots
-	            if (lobbyEntrantDAO.getPlayerCount(lobbyEntity) >= eventMaxPlayers) break;
+		if (!isPrivate) { // Queue Matchmaking
+	        System.out.println("### Get the players...");
+	        List<Long> queuePlayers = matchmakingBO.getPlayersFromQueue(eventClass, eventEntity.getEventModeId(), 
+	        		carClassHash, isSClassFilterActive, eventMaxPlayers);
 
-	            System.out.println("### Get the player...");
-	            Long queuePersonaId = matchmakingBO.getPlayerFromQueue(eventClass, eventEntity.getEventModeId(), carClassHash, isSClassFilterActive);
-
-	            if (!queuePersonaId.equals(-1L) && !matchmakingBO.isEventIgnored(queuePersonaId, eventId)) {
-	            	 System.out.println("### Get the player THERE...");
-	                if (lobbyEntrantDAO.getPlayerCount(lobbyEntity) < eventMaxPlayers) {
-	                    sendJoinEvent(queuePersonaId, lobbyEntity, eventId, false);
-	                    playersFounded++;
-	                    System.out.println("### Get the player DONE");
-	                }
-	            }
+	        for (Long queuePlayer : queuePlayers) {
+	        	if (!queuePlayer.equals(personaId) && !matchmakingBO.isEventIgnored(queuePlayer, eventId)) {  // Hoster cannot be invited
+		            System.out.println("### Get the player THERE...");
+		            sendJoinEvent(queuePlayer, lobbyEntity, eventId, false);
+		            System.out.println("### Get the player DONE");
+		        }
 	        }
-			if (playersFounded > 1) {
+
+			if (queuePlayers.size() > 0) {
 				System.out.println("### Get the player ACTIVE");
             	sendJoinEvent(personaId, lobbyEntity, eventId, false);
             	setIsLobbyReserved(lobbyEntity, true);
@@ -219,7 +205,8 @@ public class LobbyBO {
 			sendJoinEvent(personaId, lobbyEntity, eventId, true);
 			lobbyCountdownBO.scheduleLobbyStart(lobbyEntity);
 		}
-		// This lobby has been created again, when player got a invite, but the lobby itself is not exists anymore (e.g other player has declined the invite)
+		// This lobby has been created again, when player got a invite, but the lobby itself is not exists anymore 
+		// (e.g other player has declined the invite)
 		if (tempCreated) { 
 			System.out.println("### tempCreated timer");
 			lobbyEntity.setLobbyDateTimeStart(new Date());
@@ -232,59 +219,6 @@ public class LobbyBO {
 	public void setIsLobbyReserved(LobbyEntity lobbyEntity, boolean reserved) {
 		lobbyEntity.setIsReserved(reserved);
 		lobbyDao.update(lobbyEntity);
-	}
-	
-	// Unused and can be broken after Matchmaking update
-	private void createRandomLobby(String securityToken, Long personaId, int raceFilter, int carClassHash) {
-		EventEntity eventEntity = new EventEntity();
-		List<EventEntity> eventList = new ArrayList<EventEntity>();
-		switch (raceFilter) {
-		case 1: // Sprint & Circuit
-			eventList = eventDao.findRacesSearchEnabled(carClassHash);
-			break;
-		case 2: // Drag
-			eventList = eventDao.findDragSearchEnabled(carClassHash);
-			break;
-		case 3: // All Races
-			eventList = eventDao.findAllRacesSearchEnabled(carClassHash);
-			break;
-		case 4: // Team Escape
-			eventList = eventDao.findTESearchEnabled(carClassHash);
-			break;
-		default: // No filter
-			eventList = eventDao.findAllSearchEnabled(carClassHash);
-			break;
-		}
-		
-		// System.out.println("MM RANDOM LIST Time: " + LocalDateTime.now());
-		int listSize = eventList.size();
-		eventEntity.setId(randomEventId(eventList, listSize)); 
-
-		// System.out.println("MM RANDOM LOBBY Time: " + LocalDateTime.now());
-		LobbyEntity lobbyEntity = new LobbyEntity();
-		lobbyEntity.setEvent(eventEntity);
-		lobbyEntity.setIsPrivate(false);
-		lobbyEntity.setLobbyDateTimeStart(null);
-		lobbyEntity.setPersonaId(personaId);
-		lobbyDao.insert(lobbyEntity);
-
-		// System.out.println("MM RANDOM FINAL Time: " + LocalDateTime.now());
-		openFireSoapBoxCli.send(XmppChat.createSystemMessage("### New MP race is created."), personaId);
-		sendJoinEvent(personaId, lobbyEntity, eventEntity.getId(), false);
-		setIsLobbyReserved(lobbyEntity, true);
-		lobbyCountdownBO.scheduleLobbyStart(lobbyEntity);
-		lobbyDao.update(lobbyEntity);
-		// System.out.println("MM RANDOM END Time: " + LocalDateTime.now());
-	}
-	
-	// Random generated eventId
-	private int randomEventId(List<EventEntity> eventList, int listSize) {
-		Random rand = new Random();
-		// System.out.println("MM RANDOM GETCAR Time: " + LocalDateTime.now());
-		int randomEntityId = rand.nextInt(listSize);
-	    EventEntity randomEvent = eventList.get(randomEntityId);
-		// System.out.println("MM RANDOM CHOOSE Time: " + LocalDateTime.now());
-		return randomEvent.getId();
 	}
 
 	// FIXME I'm not sure how the server will react on lobby-list, where all lobbies is full...
@@ -519,20 +453,19 @@ public class LobbyBO {
 		return time.intValue();
 	}
 	
-	private void excludeIgnoredEvents(boolean redis, PersonaEntity personaEntity, List<LobbyEntity> lobbys) {
-		if (redis) { // Do two "for" loops to avoid ConcurrentModificationException
-			List<Integer> eventIgnoredList = matchmakingBO.getEventIgnoredList(personaEntity.getPersonaId());
-			if (personaEntity.isIgnoreRaces() && !eventIgnoredList.isEmpty()) {
-				List<Integer> idsToRemove = new ArrayList<Integer>();
-				for (LobbyEntity lobby : lobbys) {
-					if (eventIgnoredList.contains(lobby.getEvent().getId())) {
-						idsToRemove.add(lobbys.indexOf(lobby)); // Hold that lobby ID to remove it
-					}
+	private void excludeIgnoredEvents(PersonaEntity personaEntity, List<LobbyEntity> lobbys) {
+		// Do two "for" loops to avoid ConcurrentModificationException
+		List<Long> eventIgnoredList = matchmakingBO.getIgnoredEvents(personaEntity.getPersonaId());
+		if (personaEntity.isIgnoreRaces() && !eventIgnoredList.isEmpty()) {
+			List<Integer> idsToRemove = new ArrayList<Integer>();
+			for (LobbyEntity lobby : lobbys) {
+				if (eventIgnoredList.contains((long) lobby.getEvent().getId())) {
+					idsToRemove.add(lobbys.indexOf(lobby)); // Hold that lobby ID to remove it
 				}
-				if (!idsToRemove.isEmpty()) {
-					for (int idToRemove : idsToRemove) {
-						lobbys.remove(idToRemove); // Remove the lobby with ignored event ID
-					}
+			}
+			if (!idsToRemove.isEmpty()) {
+				for (int idToRemove : idsToRemove) {
+					lobbys.remove(idToRemove); // Remove the lobby with ignored event ID
 				}
 			}
 		}

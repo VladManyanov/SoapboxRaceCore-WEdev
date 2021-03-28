@@ -1,18 +1,10 @@
-/*
- * Taken from SBRW WorldUnited.gg, original code by HeyItsLeo
- */
-
 package com.soapboxrace.core.bo;
-
-import io.lettuce.core.KeyValue;
-import io.lettuce.core.ScanIterator;
-import io.lettuce.core.api.StatefulRedisConnection;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
 import javax.ejb.*;
 
 import com.soapboxrace.core.bo.util.CarClassType;
@@ -26,12 +18,8 @@ import com.soapboxrace.core.xmpp.XmppChat;
 import com.soapboxrace.jaxb.http.ArrayOfMMLobbies;
 
 /**
- * Responsible for managing the multiplayer matchmaking system.
- * This deals with 2 classes of events: restricted and open.
- * When asked for a persona for a given car class, the matchmaker
- * will check if that class is open or restricted. Open events will receive
- * players of any class, while restricted events will only receive players of
- * the required class.
+ * Matchmaking system with various filters for players & lobby hoster, including Ignored Events system.
+ * Original base code by HeyItsLeo
  *
  * @author heyitsleo, Hypercycle
  */
@@ -40,6 +28,11 @@ import com.soapboxrace.jaxb.http.ArrayOfMMLobbies;
 @Lock(LockType.READ)
 public class MatchmakingBO {
 
+	// Stores the queue with players & their information
+	private final Map<Long, String> mmQueuePlayers = new ConcurrentHashMap<>();
+	// Stores the ignored events lists for players
+    private final Map<Long, List<Long>> mmIgnoredEvents = new ConcurrentHashMap<>();
+	
     @EJB
     private RedisBO redisBO;
 
@@ -55,27 +48,6 @@ public class MatchmakingBO {
     @EJB
 	private OpenFireSoapBoxCli openFireSoapBoxCli;
 
-    private StatefulRedisConnection<String, String> redisConnection;
-
-    @PostConstruct
-    public void initialize() {
-        if (parameterBO.getBoolParam("REDIS_ENABLE")) {
-            this.redisConnection = this.redisBO.getConnection();
-            this.redisConnection.sync().del("matchmaking_queue"); // Delete any of MM queue entrants, if any exists
-            System.out.println("Initialized matchmaking system");
-        } else {
-        	System.out.println("Redis is not enabled! Matchmaking queue is disabled.");
-        }
-    }
-
-    @PreDestroy
-    public void shutdown() {
-        if (this.redisConnection != null) {
-            this.redisConnection.sync().del("matchmaking_queue");
-        }
-        System.out.println("Shutdown matchmaking system");
-    }
-
     /**
      * Adds the given Persona ID to the queue under the given search priorities.
      * CarClass, RaceFilter and isAvailable is saved as "PlayerVehicleInfo" string (Value), since personaId is a Key.
@@ -88,24 +60,15 @@ public class MatchmakingBO {
      */
     public void addPlayerToQueue(Long personaId, Integer carClass, Integer raceFilter, int isAvailable, int searchStage) {
     	String playerVehicleInfo = carClass.toString() + "," + raceFilter.toString() + "," + isAvailable + "," + searchStage;
-        if (this.redisConnection != null) {
-            this.redisConnection.sync().hset("matchmaking_queue", personaId.toString(), playerVehicleInfo);
-            matchmakingWebStatusTest();
-//          System.out.println("playerCount add (+1): " + curPlayerCount);
-        }
+    	mmQueuePlayers.put(personaId, playerVehicleInfo);
     }
 
     /**
      * Removes the given persona ID from the queue.
-     *
      * @param personaId The ID of the persona to remove from the queue.
      */
     public void removePlayerFromQueue(Long personaId) {
-        if (this.redisConnection != null) {
-            this.redisConnection.sync().hdel("matchmaking_queue", personaId.toString());
-            matchmakingWebStatusTest();
-//          System.out.println("playerCount remove (+1): " + curPlayerCount);
-        }
+    	mmQueuePlayers.remove(personaId);
     }
 
     /**
@@ -116,21 +79,20 @@ public class MatchmakingBO {
      * @param carClass The car class hash to find a persona in.
      * @param eventModeId Event Mode ID
      * @param hosterCarClass Car class hash of first player's car
-     * @return The ID of the persona, or {@literal -1} if no persona was found.
+     * @param isSClassFilterActive Custom filter for separate S-class matchmaking
+     * @param eventMaxPlayers How much players that event can have
+     * @return List of personas (by ID) which is able to participate
      */
-    public Long getPlayerFromQueue(Integer carClass, int eventModeId, int hosterCarClass, boolean isSClassFilterActive) {
-        if (this.redisConnection == null) {
-        	System.out.println("### redisConnection FUCKED");
-            return -1L;
-        }
-
-        ScanIterator<KeyValue<String, String>> searchIterator = ScanIterator.hscan(this.redisConnection.sync(), "matchmaking_queue");
+    public List<Long> getPlayersFromQueue(Integer carClass, int eventModeId, int hosterCarClass, boolean isSClassFilterActive, int eventMaxPlayers) {
         System.out.println("### getPlayerFromQueue");
+        List<Long> readyPlayers = new ArrayList<Long>();
         long personaId = -1L;
-
-        while (searchIterator.hasNext()) {
-            KeyValue<String, String> keyValue = searchIterator.next();
-            String[] playerVehicleInfo = keyValue.getValue().split(",");
+        int playersFounded = 1; // We already have 1 of EventMaxPlayers entrant (the hoster)
+        
+        for (Map.Entry<Long, String> queueEntry : this.mmQueuePlayers.entrySet()) {
+        	if (playersFounded >= eventMaxPlayers) break;
+        	
+            String[] playerVehicleInfo = queueEntry.getValue().split(",");
             int playerCarClass = Integer.parseInt(playerVehicleInfo[0]);
             int playerRaceFilter = Integer.parseInt(playerVehicleInfo[1]);
             int isAvailable = Integer.parseInt(playerVehicleInfo[2]);
@@ -140,15 +102,16 @@ public class MatchmakingBO {
             System.out.println("### playerCarClass: " + Integer.parseInt(playerVehicleInfo[0]) + ", playerRaceFilter: " + Integer.parseInt(playerVehicleInfo[1]) + ", searchStage: " + Integer.parseInt(playerVehicleInfo[3]) + ", isAvailable: " + Integer.parseInt(playerVehicleInfo[2]) + " arrayLength: " + playerVehicleInfo.length);
             if (checkPlayerQueueRequirements(playerCarClass, playerRaceFilter, searchStage, carClass, eventModeId, 
             		hosterCarClass, isSClassFilterActive, isAvailable)) {
-                personaId = Long.parseLong(keyValue.getKey());
+                personaId = queueEntry.getKey();
                 String newPlayerVehicleInfo = playerCarClass + "," + playerRaceFilter + "," + 0 + "," + 0; // This entrant is not available for new invites
-                this.redisConnection.sync().hset("matchmaking_queue", keyValue.getKey(), newPlayerVehicleInfo);
-                // removePlayerFromQueue(personaId);
+                mmQueuePlayers.replace(personaId, newPlayerVehicleInfo);
                 System.out.println("### getPlayerFromQueue FINAL");
+                readyPlayers.add(personaId);
+                playersFounded++;
                 break;
             }
         }
-        return personaId;
+        return readyPlayers;
     }
     
     /**
@@ -183,20 +146,17 @@ public class MatchmakingBO {
     
     /**
      * Information output for API, contains real-time Race Now status and available lobbies.
-     *
      * @return ArrayOfMMLobbies class with Matchmaking data
      */
     public ArrayOfMMLobbies matchmakingWebStatus() {
         System.out.println("### matchmakingWebStatusInit");
         ArrayOfMMLobbies arrayOfMMLobbies = new ArrayOfMMLobbies();
         int playerCount = 0;
-        ScanIterator<KeyValue<String, String>> searchIterator = ScanIterator.hscan(this.redisConnection.sync(), "matchmaking_queue");
 
         // Check the car class of all players in MM Queue
-        while (searchIterator.hasNext()) {
+        for (Map.Entry<Long, String> queueEntry : this.mmQueuePlayers.entrySet()) {
         	System.out.println("### matchmakingWebStatus playerFetchStart");
-        	KeyValue<String, String> keyValue = searchIterator.next();
-            String[] playerVehicleInfo = keyValue.getValue().split(",");
+            String[] playerVehicleInfo = queueEntry.getValue().split(",");
             int playerCarClass = Integer.parseInt(playerVehicleInfo[0]);
             int isAvailable = Integer.parseInt(playerVehicleInfo[2]);
             if (isAvailable == 1) {
@@ -245,98 +205,6 @@ public class MatchmakingBO {
         }
         System.out.println("### matchmakingWebStatus finish");
         return arrayOfMMLobbies;
-    }
-    
-    public void matchmakingWebStatusTest() {
-        int SClassPlayers = 0;
-        int AClassPlayers = 0;
-        int BClassPlayers = 0;
-        int CClassPlayers = 0;
-        int DClassPlayers = 0;
-        int EClassPlayers = 0;
-        int playerCount = 0;
-        System.out.println("### matchmakingTestStatusInit");
-        ScanIterator<KeyValue<String, String>> searchIterator = ScanIterator.hscan(this.redisConnection.sync(), "matchmaking_queue");
-
-        // Check the car class of all players in MM Queue
-        while (searchIterator.hasNext()) {
-        	System.out.println("### matchmakingTestStatus playerFetchStart");
-        	KeyValue<String, String> keyValue = searchIterator.next();
-            String[] playerVehicleInfo = keyValue.getValue().split(",");
-            int playerCarClass = Integer.parseInt(playerVehicleInfo[0]);
-            int isAvailable = Integer.parseInt(playerVehicleInfo[2]);
-            if (isAvailable == 1) {
-            	switch (CarClassType.valueOf(playerCarClass)) {
-                case S_CLASS:
-                	SClassPlayers++;
-                	playerCount++;
-                	break;
-                case A_CLASS:
-                	AClassPlayers++;
-                	playerCount++;
-                	break;
-                case B_CLASS:
-                	BClassPlayers++;
-                	playerCount++;
-                	break;
-                case C_CLASS:
-                	CClassPlayers++;
-                	playerCount++;
-                	break;
-                case D_CLASS:
-                	DClassPlayers++;
-                	playerCount++;
-                	break;
-                case E_CLASS:
-                	EClassPlayers++;
-                	playerCount++;
-                	break;
-                default:
-                	// Should we display this category too?
-                	playerCount++;
-                	break;
-                }
-            }
-            System.out.println("### matchmakingTestStatus playerFetchEnd");
-        }
-        if (playerCount > 0) {
-        	 System.out.println("### Players searching on Race Now, by classes: S[" + SClassPlayers + "], A[" + AClassPlayers + "], B[" + BClassPlayers + "],"
-             		+ " C[" + CClassPlayers + "], D[" + DClassPlayers + "], E[" + EClassPlayers + "]");
-        	 System.out.println("### Players searching on Race Now: " + playerCount);
-        }
-   
-        List<LobbyEntity> lobbiesList = lobbyDAO.findAllOpen();
-        if (lobbiesList.isEmpty()) {
-        	System.out.println("### No public lobbies is available yet.");
-        }
-        else {
-        	for (LobbyEntity lobby : lobbiesList) {
-        		int lobbyHosterCarClass = lobby.getCarClassHash();
-        		EventEntity lobbyEvent = lobby.getEvent();
-        		String isTimerActive = "Search";
-        		if (lobby.getLobbyDateTimeStart() != null) {
-        			isTimerActive = "Waiting";
-        		}
-        		String eventName = lobbyEvent.getName();
-        		int eventMode = lobbyEvent.getEventModeId();
-        		int eventCarClass = lobbyEvent.getCarClassHash();
-        		Long lobbyTeamPlayer = lobby.getTeam1Id();
-        		
-        		String lobbyHosterCarClassStr = eventResultBO.getCarClassLetter(lobbyHosterCarClass);
-        		String eventCarClassStr = eventResultBO.getCarClassLetter(eventCarClass);
-        		
-        		StringBuilder lobbyInfoOutput = new StringBuilder();
-        		lobbyInfoOutput.append("### Mode: " + EventModeType.valueOf(eventMode) + ", ");
-        		lobbyInfoOutput.append("Class: " + eventCarClassStr + ", ");
-        		lobbyInfoOutput.append("Event: " + eventName + ", ");
-        		lobbyInfoOutput.append("Priority Class: " + lobbyHosterCarClassStr + ", ");
-        		if (lobbyTeamPlayer != null) {
-        			lobbyInfoOutput.append("[T], ");
-        		}
-        		lobbyInfoOutput.append("Status: " + isTimerActive + ", ");
-        		System.out.println(lobbyInfoOutput.toString());
-            }
-        }
     }
     
     /**
@@ -460,73 +328,51 @@ public class MatchmakingBO {
      * Add the given event ID to the list of ignored events for the given persona ID.
      *
      * @param personaId the persona ID
-     * @param eventId the event ID
+     * @param eventEntity Entity of the event
      */
-    public void ignoreEvent(long personaId, EventEntity EventEntity) {
+    public void ignoreEvent(long personaId, EventEntity eventEntity) {
     	// Event will be ignored only when player is on Race Now search
-        if (this.redisConnection != null) {
-        	System.out.println("### hexists: " + this.redisConnection.sync().hexists("matchmaking_queue", Long.toString(personaId)));
-        	if (this.redisConnection.sync().hexists("matchmaking_queue", Long.toString(personaId))) {
-        		this.redisConnection.sync().sadd("ignored_events." + personaId, Long.toString(EventEntity.getId()));
-                openFireSoapBoxCli.send(XmppChat.createSystemMessage("### " + EventEntity.getName() + " will be ignored in the Race Now search for a while."), personaId);
-        	}
+        if (mmQueuePlayers.containsKey(personaId)) {
+        	getIgnoredEvents(personaId).add((long) eventEntity.getId());
+        	openFireSoapBoxCli.send(XmppChat.createSystemMessage("### " + eventEntity.getName() + " will be ignored in the Race Now search for a while."), personaId);
         }
     }
     
     /**
      * Checks if the specified player is on Race Now search.
-     *
      * @param personaId the persona ID
      */
     public boolean isPlayerOnMMSearch(long personaId) {
-    	boolean isExists = false;
-        if (this.redisConnection != null) {
-        	isExists = this.redisConnection.sync().hexists("matchmaking_queue", Long.toString(personaId));
-        }
-        return isExists;
+        return mmQueuePlayers.containsKey(personaId);
     }
 
     /**
-     * Resets the list of ignored events for the given persona ID
-     *
+     * Resets the list of Ignored Events for the given persona ID.
      * @param personaId the persona ID
      */
     public void resetIgnoredEvents(long personaId) {
-        if (this.redisConnection != null) {
-            this.redisConnection.sync().del("ignored_events." + personaId);
-        }
+    	mmIgnoredEvents.remove(personaId);
     }
 
     /**
-     * Checks if the given event ID is in the list of ignored events for the given persona ID
+     * Checks if the given event ID is in the list of ignored events for the given persona ID.
      *
      * @param personaId the persona ID
      * @param eventId the event ID
-     * @return {@code true} if the given event ID is in the list of ignored events for the given persona ID
+     * @return {@code true} if the given event ID is in the list of Ignored Events for the given persona ID.
      */
     public boolean isEventIgnored(long personaId, long eventId) {
-        if (this.redisConnection != null) {
-            return this.redisConnection.sync().sismember("ignored_events." + personaId, Long.toString(eventId));
-        }
-        return false;
+        return getIgnoredEvents(personaId).contains(eventId);
     }
     
     /**
-     * Get the ignored by persona events list
+     * Get the ignored events list by persona.
      *
      * @param personaId the persona ID
-     * @return int-list of ignored eventId
+     * @return long-list of Ignored EventIds
      */
-    public List<Integer> getEventIgnoredList(long personaId) {
-    	List<Integer> eventIgnoreList = new ArrayList<Integer>();
-        if (this.redisConnection != null) {
-            ScanIterator<String> ignoreIterator = ScanIterator.sscan(this.redisConnection.sync(), "ignored_events." + personaId);
-            while (ignoreIterator.hasNext()) {
-            	String eventId = ignoreIterator.next();
-            	eventIgnoreList.add(Integer.parseInt(eventId));
-            }
-        }
-        return eventIgnoreList;
+    public List<Long> getIgnoredEvents(long personaId) {
+        return mmIgnoredEvents.computeIfAbsent(personaId, k -> new ArrayList<>());
     }
 
     @Asynchronous
