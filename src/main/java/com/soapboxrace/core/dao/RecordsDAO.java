@@ -67,7 +67,7 @@ public class RecordsDAO extends BaseDAO<RecordsEntity> {
 	public BigInteger countRecordPlace(int eventId, boolean powerUps, int carClassHash, Long timeMS) {
 		Query query = entityManager.createNativeQuery(
 			"SELECT Count(*) from records WHERE eventId = "+eventId+" and powerUps = "+powerUps+" and carClassHash = "+carClassHash
-					+ "and timeMS < "+timeMS+" and userBan = false"
+					+ "and timeMS < "+timeMS+" and userBan = false and isObsolete = false "
 		);
 		BigInteger count;
 		@SuppressWarnings("unchecked")

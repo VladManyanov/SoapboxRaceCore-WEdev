@@ -91,13 +91,13 @@ public class LobbyDAO extends BaseDAO<LobbyEntity> {
 					break;
 				case A_CLASS:
 				case B_CLASS: // A-B Classes group
-					append = "AND (obj.event.carClassHash = " + CarClassType.A_CLASS.getId() + ") OR (obj.event.carClassHash = " + CarClassType.B_CLASS.getId() + ") ";
+					append = "AND ((obj.event.carClassHash = " + CarClassType.A_CLASS.getId() + ") OR (obj.event.carClassHash = " + CarClassType.B_CLASS.getId() + ")) ";
 					break;
 				case C_CLASS:
 				case D_CLASS:
 				case E_CLASS: // C-D-E Classes group
-					append = "AND (obj.event.carClassHash = " + CarClassType.C_CLASS.getId() + ") OR (obj.event.carClassHash = " + CarClassType.D_CLASS.getId() +
-					") OR (obj.event.carClassHash = " + CarClassType.E_CLASS.getId() + ") ";
+					append = "AND ((obj.event.carClassHash = " + CarClassType.C_CLASS.getId() + ") OR (obj.event.carClassHash = " + CarClassType.D_CLASS.getId() +
+					") OR (obj.event.carClassHash = " + CarClassType.E_CLASS.getId() + ")) ";
 					break;
 				default:
 					break;
@@ -123,18 +123,18 @@ public class LobbyDAO extends BaseDAO<LobbyEntity> {
 		if (carClassHash != CarClassType.MISC.getId()) { // If player wants to drive Drift-Spec or Traffic car, he just should avoid Drag events
 			switch (raceFilter) {
 			case 1: // Sprint & Circuit
-				append = "AND (obj.event.eventModeId = " + EventModeType.SPRINT.getId() + " or obj.event.eventModeId = " + EventModeType.CIRCUIT.getId() + ") ";
+				append = "AND ((obj.event.eventModeId = " + EventModeType.SPRINT.getId() + " OR obj.event.eventModeId = " + EventModeType.CIRCUIT.getId() + ")) ";
 				break;
 			case 2: // Drag
 				append = "AND obj.event.eventModeId = " + EventModeType.DRAG.getId() + " ";
 				break;
 			case 3: // All Races
-				append = "AND (obj.event.eventModeId = " + EventModeType.SPRINT.getId() + " or obj.event.eventModeId = " + EventModeType.CIRCUIT.getId() + 
-				" or obj.event.eventModeId = " + EventModeType.DRAG.getId() + ") ";
+				append = "AND ((obj.event.eventModeId = " + EventModeType.SPRINT.getId() + " OR obj.event.eventModeId = " + EventModeType.CIRCUIT.getId() + 
+				" OR obj.event.eventModeId = " + EventModeType.DRAG.getId() + ")) ";
 				break;
 			case 4: // Team Escape
-				append = "AND (obj.event.eventModeId = " + EventModeType.TEAM_ESCAPE.getId() + " or obj.event.eventModeId = " 
-				+ EventModeType.INTERCEPTOR.getId() + ") ";
+				append = "AND ((obj.event.eventModeId = " + EventModeType.TEAM_ESCAPE.getId() + " OR obj.event.eventModeId = " 
+				+ EventModeType.INTERCEPTOR.getId() + ")) ";
 				break;
 			default: // No filter
 				append = "";

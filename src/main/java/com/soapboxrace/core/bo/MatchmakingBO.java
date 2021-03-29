@@ -84,7 +84,7 @@ public class MatchmakingBO {
      * @return List of personas (by ID) which is able to participate
      */
     public List<Long> getPlayersFromQueue(Integer carClass, int eventModeId, int hosterCarClass, boolean isSClassFilterActive, int eventMaxPlayers) {
-        System.out.println("### getPlayerFromQueue");
+        // System.out.println("### getPlayerFromQueue");
         List<Long> readyPlayers = new ArrayList<Long>();
         long personaId = -1L;
         int playersFounded = 1; // We already have 1 of EventMaxPlayers entrant (the hoster)
@@ -97,15 +97,15 @@ public class MatchmakingBO {
             int playerRaceFilter = Integer.parseInt(playerVehicleInfo[1]);
             int isAvailable = Integer.parseInt(playerVehicleInfo[2]);
             int searchStage = Integer.parseInt(playerVehicleInfo[3]);
-            System.out.println("### getPlayerFromQueue 2");
+            // System.out.println("### getPlayerFromQueue 2");
             
-            System.out.println("### playerCarClass: " + Integer.parseInt(playerVehicleInfo[0]) + ", playerRaceFilter: " + Integer.parseInt(playerVehicleInfo[1]) + ", searchStage: " + Integer.parseInt(playerVehicleInfo[3]) + ", isAvailable: " + Integer.parseInt(playerVehicleInfo[2]) + " arrayLength: " + playerVehicleInfo.length);
+            // System.out.println("### playerCarClass: " + Integer.parseInt(playerVehicleInfo[0]) + ", playerRaceFilter: " + Integer.parseInt(playerVehicleInfo[1]) + ", searchStage: " + Integer.parseInt(playerVehicleInfo[3]) + ", isAvailable: " + Integer.parseInt(playerVehicleInfo[2]) + " arrayLength: " + playerVehicleInfo.length);
             if (checkPlayerQueueRequirements(playerCarClass, playerRaceFilter, searchStage, carClass, eventModeId, 
             		hosterCarClass, isSClassFilterActive, isAvailable)) {
                 personaId = queueEntry.getKey();
                 String newPlayerVehicleInfo = playerCarClass + "," + playerRaceFilter + "," + 0 + "," + 0; // This entrant is not available for new invites
                 mmQueuePlayers.replace(personaId, newPlayerVehicleInfo);
-                System.out.println("### getPlayerFromQueue FINAL");
+                // System.out.println("### getPlayerFromQueue FINAL");
                 readyPlayers.add(personaId);
                 playersFounded++;
                 break;
@@ -140,7 +140,7 @@ public class MatchmakingBO {
         if (!isPriorityClassFilterAllowed(playerCarClass, carClass, hosterCarClass, searchStage)) {
         	return false;
         }
-        System.out.println("### checkPlayerQueueRequirements: " + isPlayerPassed);
+        // System.out.println("### checkPlayerQueueRequirements: " + isPlayerPassed);
         return isPlayerPassed;
     }
     
@@ -149,13 +149,13 @@ public class MatchmakingBO {
      * @return ArrayOfMMLobbies class with Matchmaking data
      */
     public ArrayOfMMLobbies matchmakingWebStatus() {
-        System.out.println("### matchmakingWebStatusInit");
+        // System.out.println("### matchmakingWebStatusInit");
         ArrayOfMMLobbies arrayOfMMLobbies = new ArrayOfMMLobbies();
         int playerCount = 0;
 
         // Check the car class of all players in MM Queue
         for (Map.Entry<Long, String> queueEntry : this.mmQueuePlayers.entrySet()) {
-        	System.out.println("### matchmakingWebStatus playerFetchStart");
+        	// System.out.println("### matchmakingWebStatus playerFetchStart");
             String[] playerVehicleInfo = queueEntry.getValue().split(",");
             int playerCarClass = Integer.parseInt(playerVehicleInfo[0]);
             int isAvailable = Integer.parseInt(playerVehicleInfo[2]);
@@ -179,14 +179,14 @@ public class MatchmakingBO {
                 }
             	playerCount++;
             }
-            System.out.println("### matchmakingWebStatus playerFetchEnd");
+            // System.out.println("### matchmakingWebStatus playerFetchEnd");
         }
         arrayOfMMLobbies.setPlayerCountAll(playerCount);
    
         // Let's get the lobbies information
         List<LobbyEntity> lobbiesList = lobbyDAO.findAllOpen();
         if (!lobbiesList.isEmpty()) {
-        	System.out.println("### matchmakingWebStatus lobbiesStart");
+        	// System.out.println("### matchmakingWebStatus lobbiesStart");
         	for (LobbyEntity lobby : lobbiesList) {
         		EventEntity lobbyEvent = lobby.getEvent();
         		String eventName = lobbyEvent.getName();
@@ -200,10 +200,10 @@ public class MatchmakingBO {
         		if (lobby.getTeam1Id() != null) {isTeamRace = true;}
         		
         		arrayOfMMLobbies.add(eventMode, eventName, eventCarClassStr, lobbyHosterCarClassStr, isTeamRace, isPlayersInside);
-        		System.out.println("### matchmakingWebStatus lobbiesOne");
+        		// System.out.println("### matchmakingWebStatus lobbiesOne");
             }
         }
-        System.out.println("### matchmakingWebStatus finish");
+        // System.out.println("### matchmakingWebStatus finish");
         return arrayOfMMLobbies;
     }
     
@@ -234,7 +234,7 @@ public class MatchmakingBO {
 			isRaceFilterAllowed = true;
 			break;
     	}
-        System.out.println("### isRaceFilterAllowed: " + isRaceFilterAllowed);
+        // System.out.println("### isRaceFilterAllowed: " + isRaceFilterAllowed);
         return isRaceFilterAllowed;
     }
     
@@ -283,7 +283,7 @@ public class MatchmakingBO {
     	else if (playerCarClass == eventCarClass) { // Class-restricted race and player fits in
         		isPriorityClassFilterAllowed = true;
         }
-        System.out.println("### isPriorityClassFilterAllowed: " + isPriorityClassFilterAllowed + ", searchStage: " + searchStage);
+        // System.out.println("### isPriorityClassFilterAllowed: " + isPriorityClassFilterAllowed + ", searchStage: " + searchStage);
         return isPriorityClassFilterAllowed;
     }
     
@@ -304,7 +304,7 @@ public class MatchmakingBO {
     			&& playerCarClass != hosterCarClass) {
     		isSClassFilterAllowed = false; // Only S-Class cars is able to participate on races, which is hosted by players on S-class cars 
     	}
-        System.out.println("### isSClassFilterAllowed: " + isSClassFilterAllowed);
+        // System.out.println("### isSClassFilterAllowed: " + isSClassFilterAllowed);
         return isSClassFilterAllowed;
     }
     
@@ -320,7 +320,7 @@ public class MatchmakingBO {
     	if (playerCarClass == CarClassType.MISC.getId() && eventModeId == EventModeType.DRAG.getId()) {
     		isMiscClassFilterAllowed = false;
     	}
-        System.out.println("### isMiscClassFilterAllowed: " + isMiscClassFilterAllowed);
+        // System.out.println("### isMiscClassFilterAllowed: " + isMiscClassFilterAllowed);
         return isMiscClassFilterAllowed;
     }
 

@@ -265,7 +265,7 @@ public class EventResultBO {
 			eventResult.setLobbyInviteId(lobbyId);
 			eventResult.setPersonaId(eventResult.getPersonaId());
 		}
-		System.out.println("### defineFinishLobby");
+		// System.out.println("### defineFinishLobby");
 		return eventResult;
 	}
 }

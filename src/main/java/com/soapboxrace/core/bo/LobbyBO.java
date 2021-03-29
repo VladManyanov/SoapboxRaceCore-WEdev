@@ -116,7 +116,7 @@ public class LobbyBO {
 		if (!lobbys.isEmpty()) {
 			// System.out.println("### addFakeToQueue");
 			matchmakingBO.addPlayerToQueue(personaId, carClassHash, raceFilter, 0, 0); // Temporary entry for "Ignore Races" feature
-			joinLobby(personaEntity, lobbys, true, carClassHash, isSClassFilterActive);
+			selectLobby(personaEntity, lobbys, true, carClassHash, isSClassFilterActive);
 		}
 	}
 
@@ -127,7 +127,7 @@ public class LobbyBO {
 		if (lobbys.isEmpty()) {
 			createLobby(personaEntity, eventId, false, false, carClassHash);
 		} else {
-			joinLobby(personaEntity, lobbys, false, carClassHash, parameterBO.getBoolParam("RACENOW_SCLASS_SEPARATE"));
+			selectLobby(personaEntity, lobbys, false, carClassHash, parameterBO.getBoolParam("RACENOW_SCLASS_SEPARATE"));
 		}
 	}
 
@@ -223,63 +223,54 @@ public class LobbyBO {
 		lobbyDao.update(lobbyEntity);
 	}
 
-	// FIXME I'm not sure how the server will react on lobby-list, where all lobbies is full...
-	private void joinLobby(PersonaEntity personaEntity, List<LobbyEntity> lobbys, boolean checkIgnoredEvents, 
+	private void selectLobby(PersonaEntity personaEntity, List<LobbyEntity> lobbys, boolean checkIgnoredEvents, 
 			int playerCarHash, boolean isSClassFilterActive) {
 		Long personaId = personaEntity.getPersonaId();
 		// System.out.println("joinLobby for " + personaId);
-		LobbyEntity lobbyEntity = null;
-		LobbyEntity lobbyEntityEmpty = null;
+		LobbyEntity lobbyEntityNew = null;
 		int eventId = 0;
 		EventEntity eventEntity = null;
-		for (LobbyEntity lobbyEntityTmp : lobbys) {
-			eventEntity = lobbyEntityTmp.getEvent();
-			eventId = lobbyEntityTmp.getEvent().getId();
-			int hosterCarClass = lobbyEntityTmp.getCarClassHash();
+		for (LobbyEntity lobbyEntityCheck : lobbys) {
+			eventEntity = lobbyEntityCheck.getEvent();
+			eventId = eventEntity.getId();
+			int hosterCarClass = lobbyEntityCheck.getCarClassHash();
 			
-			if ((lobbyEntityTmp.getPersonaId().equals(personaId) && !lobbyEntityTmp.isReserved()) || // Player cannot join the lobby, which is being hosted by player himself and not yet populated
-				(checkIgnoredEvents && matchmakingBO.isEventIgnored(personaEntity.getPersonaId(), eventId)) || // This event is being ignored by player, look for others
+			if ((lobbyEntityCheck.getPersonaId().equals(personaId) && !lobbyEntityCheck.isReserved()) || // Player cannot join the lobby, which is being hosted by player himself and not yet populated
+				(checkIgnoredEvents && matchmakingBO.isEventIgnored(personaId, eventId)) || // This event is being ignored by player, look for others
 				(isSClassFilterActive && !matchmakingBO.isSClassFilterAllowed(playerCarHash, hosterCarClass, eventEntity.getCarClassHash(), isSClassFilterActive))) { // S-Class filter check (if parameter is active)
 				continue; 
 			}
 			
 			int maxEntrants = eventEntity.getMaxPlayers();
-			List<LobbyEntrantEntity> lobbyEntrants = lobbyEntityTmp.getEntrants();
+			List<LobbyEntrantEntity> lobbyEntrants = lobbyEntityCheck.getEntrants();
 			int entrantsSize = lobbyEntrants.size();
 			if (entrantsSize < maxEntrants) {
-				if (lobbyEntityEmpty == null) { // In case of empty lobby-list, player will got the first empty lobby
-					lobbyEntityEmpty = lobbyEntityTmp;
-				}
 				if (entrantsSize > 0) {
-					lobbyEntity = lobbyEntityTmp;
 					if (!isPersonaInside(personaId, lobbyEntrants)) {
 						LobbyEntrantEntity lobbyEntrantEntity = new LobbyEntrantEntity();
 						lobbyEntrantEntity.setPersona(personaEntity);
-						lobbyEntrantEntity.setLobby(lobbyEntity);
+						lobbyEntrantEntity.setLobby(lobbyEntityCheck);
 						lobbyEntrants.add(lobbyEntrantEntity);
+						sendJoinEvent(personaId, lobbyEntityCheck, eventId, false); // Join this lobby
 					}
 					break;
 				}
+				else {
+					lobbyEntityNew = lobbyEntityCheck; // Copy that lobby, since we will populate that new lobby
+				}
 			}
 		}
-		if (lobbyEntity != null) {
-//			System.out.println("MM END Time: " + System.currentTimeMillis());
-			sendJoinEvent(personaId, lobbyEntity, eventId, false);
-		}
-		if (lobbyEntity == null && lobbyEntityEmpty != null) { // If all lobbies on the search is empty, player will got the first created empty lobby
-//			System.out.println("MM END Time: " + System.currentTimeMillis());
-			
+		if (lobbyEntityNew != null) { // Send the invites for lobby hoster & new player
 			// System.out.println("second choice for " + lobbyEntityEmpty.getPersonaId());
-			sendJoinEvent(personaId, lobbyEntityEmpty, eventId, false);
-			Long hosterPersonaId = lobbyEntityEmpty.getPersonaId();
-			if (!personaId.equals(hosterPersonaId)) {
+			sendJoinEvent(personaId, lobbyEntityNew, eventId, false);
+			Long hosterPersonaId = lobbyEntityNew.getPersonaId();
+			if (!personaId.equals(hosterPersonaId) && !lobbyEntityNew.isReserved()) {
 				// System.out.println("callbackRequest for " + hosterPersonaId);
-				setIsLobbyReserved(lobbyEntityEmpty, true);
-				sendJoinEvent(hosterPersonaId, lobbyEntityEmpty, eventId, false); // Send the join request for race hoster
-//				matchmakingBO.changePlayerCountInQueue(false); // Remove the hoster from queue player count
-				lobbyEntityEmpty.setLobbyDateTimeStart(new Date());
-				lobbyDao.update(lobbyEntityEmpty);
-				lobbyCountdownBO.scheduleLobbyStart(lobbyEntityEmpty);
+				setIsLobbyReserved(lobbyEntityNew, true);
+				sendJoinEvent(hosterPersonaId, lobbyEntityNew, eventId, false); // Send the join request for race hoster
+				lobbyEntityNew.setLobbyDateTimeStart(new Date());
+				lobbyDao.update(lobbyEntityNew);
+				lobbyCountdownBO.scheduleLobbyStart(lobbyEntityNew);
 			}
 		}
 	}
