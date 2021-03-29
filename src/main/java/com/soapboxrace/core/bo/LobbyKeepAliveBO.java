@@ -50,7 +50,7 @@ public class LobbyKeepAliveBO {
 	    
 	    timerConfig.setInfo(infoArray);
 	    timerService.createSingleActionTimer(priorityTimer, timerConfig);
-	    System.out.println("### searchPriorityTimer is started for " + personaId);
+	    // System.out.println("### searchPriorityTimer is started for " + personaId);
 	}
 	
 	@Timeout
@@ -58,7 +58,7 @@ public class LobbyKeepAliveBO {
 		String[] infoArray = (String[]) timer.getInfo();
 		int searchStage = 3;
 		Long personaId = Long.valueOf(infoArray[0]);
-		System.out.println("### searchPriorityTimeout for " + personaId);
+		// System.out.println("### searchPriorityTimeout for " + personaId);
 		if (matchmakingBO.isPlayerOnMMSearch(personaId)) { // Don't let the timer do stuff if player already quits the Race Now search
 			openFireSoapBoxCli.send(XmppChat.createSystemMessage("### No lobbies to fit with Priority Class Group, looking for all lobbies..."), personaId);
 			lobbyBO.joinFastLobby(personaId, Integer.parseInt(infoArray[1]), Integer.parseInt(infoArray[2]), 
