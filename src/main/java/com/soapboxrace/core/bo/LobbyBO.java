@@ -95,10 +95,10 @@ public class LobbyBO {
 		PersonaEntity personaEntity = personaDao.findById(personaId);
 		// System.out.println("### joinFastLobby, searchStage: " + searchStage);
 		List<LobbyEntity> lobbys = lobbyDao.findAllMPLobbies(carClassHash, raceFilter, searchStage, isSClassFilterActive);
+		excludeIgnoredEvents(personaEntity, lobbys);
 		if (lobbys.isEmpty() && searchStage == 1) { // If class-restricted and class group search is not succeed, initiate Priority Class Group search
 			searchStage = 2;
 		}
-		excludeIgnoredEvents(personaEntity, lobbys);
 		
 		if (lobbys.isEmpty()) {
 			matchmakingBO.addPlayerToQueue(personaId, carClassHash, raceFilter, 1, searchStage);
@@ -454,10 +454,12 @@ public class LobbyBO {
 		List<Long> eventIgnoredList = matchmakingBO.getIgnoredEvents(personaEntity.getPersonaId());
 		if (personaEntity.isIgnoreRaces() && !eventIgnoredList.isEmpty()) {
 			List<Integer> idsToRemove = new ArrayList<Integer>();
+			int index = 0;
 			for (LobbyEntity lobby : lobbys) {
 				if (eventIgnoredList.contains((long) lobby.getEvent().getId())) {
-					idsToRemove.add(lobbys.indexOf(lobby)); // Hold that lobby ID to remove it
+					idsToRemove.add(index); // Hold that lobby ID to remove it
 				}
+				index++;
 			}
 			if (!idsToRemove.isEmpty()) {
 				for (int idToRemove : idsToRemove) {

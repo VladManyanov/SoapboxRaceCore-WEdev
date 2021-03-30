@@ -244,14 +244,15 @@ public class EventResultBO {
 	public EventResult defineFinishLobby(EventResult eventResult, EventSessionEntity eventSessionEntity, boolean raceAgain) {
 		eventResult.setEventSessionId(eventSessionEntity.getId());
 		Long lobbyId = eventSessionEntity.getLobbyId();
-		if (lobbyId == 0 || !raceAgain) { // Don't initiate Race Again if the race is single-player, or player has disabled it
+		LobbyEntity oldLobbyEntity = lobbyDAO.findById(lobbyId);
+		// Don't initiate Race Again if the race is single-player, or player has disabled it, or if the lobby does not exist for some reason
+		if (lobbyId == 0 || !raceAgain || oldLobbyEntity == null) { 
 			eventResult.setExitPath(ExitPath.EXIT_TO_FREEROAM);
 			eventResult.setInviteLifetimeInMilliseconds(0);
 			eventResult.setLobbyInviteId(0);
 			eventResult.setPersonaId(eventResult.getPersonaId());
 		}
 		else {
-			LobbyEntity oldLobbyEntity = lobbyDAO.findById(lobbyId);
 			if (oldLobbyEntity.isStarted()) {
 				oldLobbyEntity.setStarted(false); // Unlock our lobby for players
 				oldLobbyEntity.setLobbyDateTimeStart(new Date());

@@ -67,19 +67,19 @@ public class LobbyKeepAliveBO {
 	}
 	
 	// What reason for this? Is this necessary for lobbies?
-	@Schedule(second = "*/20", minute = "*", hour = "*", persistent = false)
-	public void run() {
-		List<LobbyEntity> findAllOpen = lobbyDao.findAllOpen();
-		if (findAllOpen != null) {
-			for (LobbyEntity lobbyEntity : findAllOpen) {
-				List<LobbyEntrantEntity> entrants = lobbyEntity.getEntrants();
-				if (entrants != null) {
-					for (LobbyEntrantEntity lobbyEntrantEntity : entrants) {
-						lobbyBO.sendJoinMsg(lobbyEntrantEntity.getPersona().getPersonaId(), entrants);
-					}
-				}
-			}
-		}
-	}
+//	@Schedule(second = "*/20", minute = "*", hour = "*", persistent = false)
+//	public void run() {
+//		List<LobbyEntity> findAllOpen = lobbyDao.findAllOpen();
+//		if (findAllOpen != null) {
+//			for (LobbyEntity lobbyEntity : findAllOpen) {
+//				List<LobbyEntrantEntity> entrants = lobbyEntity.getEntrants();
+//				if (entrants != null) {
+//					for (LobbyEntrantEntity lobbyEntrantEntity : entrants) {
+//						lobbyBO.sendJoinMsg(lobbyEntrantEntity.getPersona().getPersonaId(), entrants);
+//					}
+//				}
+//			}
+//		}
+//	}
 
 }

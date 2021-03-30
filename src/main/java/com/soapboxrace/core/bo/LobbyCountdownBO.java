@@ -1,7 +1,6 @@
 package com.soapboxrace.core.bo;
 
 import java.nio.ByteBuffer;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Collections;
@@ -288,7 +287,7 @@ public class LobbyCountdownBO {
 	
 	// Delete the empty lobby
 	public void shutdownLobby(LobbyEntity lobbyEntity) {
-		if (lobbyEntity != null && lobbyEntrantDAO.isLobbyEmpty(lobbyEntity)) { 
+		if (lobbyEntity != null && !lobbyEntity.isStarted() && lobbyEntrantDAO.isLobbyEmpty(lobbyEntity)) { 
 			endLobby(lobbyEntity);
 			// System.out.println("### shutdownLobby");
 		}
@@ -296,7 +295,7 @@ public class LobbyCountdownBO {
 	
 	// Delete the empty lobby; however private lobby will stay until the timeout
 	public void shutdownLobbyAlt(LobbyEntity lobbyEntity) {
-		if (lobbyEntity != null && lobbyEntrantDAO.isLobbyEmpty(lobbyEntity) && !lobbyEntity.getIsPrivate()) { 
+		if (lobbyEntity != null && !lobbyEntity.isStarted() && lobbyEntrantDAO.isLobbyEmpty(lobbyEntity) && !lobbyEntity.getIsPrivate()) { 
 			// System.out.println("### shutdownLobbyAlt"); 
 			endLobby(lobbyEntity);
 		}

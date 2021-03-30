@@ -216,7 +216,7 @@ public class MatchMaking {
 		if (checkLobbyEntity == null) { // Since our requested lobby doesn't exist for some reason, we should create a new one
 			int playerCarClass = personaBO.getCurrentPlayerCarClass(activePersonaId);
 			lobbyInviteId = lobbyBO.createLobby(personaDAO.findById(activePersonaId), tokenSessionBO.getSearchEventId(securityToken), false, true, playerCarClass);
-			System.out.println("### /acceptinvite newlobby");
+			// System.out.println("### /acceptinvite newlobby");
 		}
 		tokenSessionBO.setActiveLobbyId(securityToken, lobbyInviteId);
 		// System.out.println("### /acceptinvite");
