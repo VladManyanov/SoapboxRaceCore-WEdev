@@ -58,6 +58,8 @@ public class TokenSessionEntity {
 	private Long teamId;
 	
 	private int searchEventId;
+	
+	private boolean mapHostedEvent;
 
 	public String getSecurityToken() {
 		return securityToken;
@@ -153,6 +155,14 @@ public class TokenSessionEntity {
 
 	public void setSearchEventId(int searchEventId) {
 		this.searchEventId = searchEventId;
+	}
+	
+	public boolean isMapHostedEvent() {
+		return mapHostedEvent;
+	}
+
+	public void setMapHostedEvent(boolean mapHostedEvent) {
+		this.mapHostedEvent = mapHostedEvent;
 	}
 
 }

@@ -1,6 +1,7 @@
 package com.soapboxrace.core.bo;
 
 import java.nio.ByteBuffer;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Collections;
@@ -107,11 +108,11 @@ public class LobbyCountdownBO {
 	
 	@Timeout
 	public void eventInit(Timer timer) {
-		// System.out.println("### Lobby timer init, " + LocalDateTime.now());
+		//System.out.println("### Lobby timer init, " + LocalDateTime.now());
 		Long lobbyId = (Long) timer.getInfo();
 		LobbyEntity lobbyEntity = lobbyDao.findById(lobbyId);
 		if (lobbyEntity == null) {
-			// System.out.println("### Lobby timer killed, " + LocalDateTime.now());
+			//System.out.println("### Lobby timer killed, " + LocalDateTime.now());
 			return; // Lobby timers can exist even after lobby deletion
 		}
 		int entrantCount = lobbyEntrantDAO.getPlayerCount(lobbyEntity);
@@ -289,14 +290,14 @@ public class LobbyCountdownBO {
 	public void shutdownLobby(LobbyEntity lobbyEntity) {
 		if (lobbyEntity != null && !lobbyEntity.isStarted() && lobbyEntrantDAO.isLobbyEmpty(lobbyEntity)) { 
 			endLobby(lobbyEntity);
-			// System.out.println("### shutdownLobby");
+			//System.out.println("### shutdownLobby");
 		}
 	}
 	
 	// Delete the empty lobby; however private lobby will stay until the timeout
 	public void shutdownLobbyAlt(LobbyEntity lobbyEntity) {
 		if (lobbyEntity != null && !lobbyEntity.isStarted() && lobbyEntrantDAO.isLobbyEmpty(lobbyEntity) && !lobbyEntity.getIsPrivate()) { 
-			// System.out.println("### shutdownLobbyAlt"); 
+			//System.out.println("### shutdownLobbyAlt"); 
 			endLobby(lobbyEntity);
 		}
 	}

@@ -146,8 +146,10 @@ public class MatchMaking {
 		matchmakingBO.removePlayerFromQueue(activePersonaId);
 		LobbyEntity lobbyEntity = lobbyDAO.findByHosterPersona(activePersonaId);
 		lobbyCountdownBO.shutdownLobby(lobbyEntity);
-		// System.out.println("### /leavequeue");
+		//System.out.println("### /leavequeue");
 		tokenSessionBO.setActiveLobbyId(securityToken, 0L);
+		tokenSessionBO.setSearchEventId(activePersonaId, 0);
+		tokenSessionBO.setMapHostedEvent(activePersonaId, false);
 		return "";
 	}
 
@@ -165,7 +167,8 @@ public class MatchMaking {
 		lobbyCountdownBO.shutdownLobbyAlt(lobbyEntity);
 		tokenSessionBO.setActiveLobbyId(securityToken, 0L);
 		tokenSessionBO.setSearchEventId(activePersonaId, 0);
-		// System.out.println("### /leavelobby");
+		tokenSessionBO.setMapHostedEvent(activePersonaId, false);
+		//System.out.println("### /leavelobby");
 		return "";
 	}
 
@@ -216,10 +219,10 @@ public class MatchMaking {
 		if (checkLobbyEntity == null) { // Since our requested lobby doesn't exist for some reason, we should create a new one
 			int playerCarClass = personaBO.getCurrentPlayerCarClass(activePersonaId);
 			lobbyInviteId = lobbyBO.createLobby(personaDAO.findById(activePersonaId), tokenSessionBO.getSearchEventId(securityToken), false, true, playerCarClass);
-			// System.out.println("### /acceptinvite newlobby");
+			//System.out.println("### /acceptinvite newlobby");
 		}
 		tokenSessionBO.setActiveLobbyId(securityToken, lobbyInviteId);
-		// System.out.println("### /acceptinvite");
+		//System.out.println("### /acceptinvite");
 		return lobbyBO.acceptinvite(activePersonaId, lobbyInviteId);
 	}
 
@@ -234,14 +237,14 @@ public class MatchMaking {
 		tokenSessionBO.setActiveLobbyId(securityToken, 0L);
 		Long activePersonaId = tokenSessionBO.getActivePersonaId(securityToken);
 		PersonaEntity personaEntity = personaDAO.findById(activePersonaId);
-		// We cannot check if player declines this event from a event map or Race Now, so do some additional checks
-		if ((lobbyEntity != null || matchmakingBO.isPlayerOnMMSearch(activePersonaId)) && personaEntity.isIgnoreRaces()) {
-			matchmakingBO.ignoreEvent(tokenSessionBO.getActivePersonaId(securityToken), eventEntity);
-			// System.out.println("### /declineinvite ignore");
+		if (!tokenSessionBO.isMapHostedEvent(securityToken) && personaEntity.isIgnoreRaces()) {
+			matchmakingBO.ignoreEvent(activePersonaId, eventEntity);
+			//System.out.println("### /declineinvite ignore");
 		}
 		matchmakingBO.removePlayerFromQueue(activePersonaId);
 		tokenSessionBO.setSearchEventId(activePersonaId, 0);
-		// System.out.println("### /declineinvite");
+		tokenSessionBO.setMapHostedEvent(activePersonaId, false);
+		//System.out.println("### /declineinvite");
 		return "";
 	}
 

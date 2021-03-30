@@ -24,12 +24,12 @@ import javax.persistence.Transient;
 @NamedQueries({ //
 		@NamedQuery(name = "LobbyEntity.findAll", query = "SELECT obj FROM UserEntity obj"), //
 		@NamedQuery(name = "LobbyEntity.findAllOpen", //
-				query = "SELECT obj FROM LobbyEntity obj WHERE obj.isPrivate = false AND obj.started = false AND ((obj.lobbyDateTimeStart between :dateTime1 and :dateTime2) OR (obj.lobbyDateTimeStart = null)) AND obj.started = false "), //
+				query = "SELECT obj FROM LobbyEntity obj WHERE obj.isPrivate = false AND obj.started = false AND ((obj.lobbyDateTimeStart between :dateTime1 and :dateTime2) OR (obj.isReserved = false)) "), //
 		
-		@NamedQuery(name = "LobbyEntity.findByEventStarted", query = "SELECT obj FROM LobbyEntity obj WHERE obj.event = :event AND obj.started = false AND ((obj.lobbyDateTimeStart between :dateTime1 AND :dateTime2) OR (obj.lobbyDateTimeStart = null)) AND obj.isPrivate = false AND obj.started = false "), //
-		@NamedQuery(name = "LobbyEntity.findByEventAndPersona", query = "SELECT obj FROM LobbyEntity obj WHERE obj.started = false AND obj.event = :event AND ((obj.lobbyDateTimeStart between :dateTime1 AND :dateTime2) OR (obj.lobbyDateTimeStart = null)) AND obj.isPrivate = true AND obj.personaId = :personaId AND obj.started = false "), //
-		@NamedQuery(name = "LobbyEntity.findByHosterPersona", query = "SELECT obj FROM LobbyEntity obj WHERE obj.started = false AND obj.personaId = :personaId  AND obj.started = false"), //
-		@NamedQuery(name = "LobbyEntity.isThisLobbyReserved", query = "SELECT obj FROM LobbyEntity obj WHERE obj.started = false AND obj.id = :id AND obj.isReserved = false AND obj.started = false"), //
+		@NamedQuery(name = "LobbyEntity.findByEventStarted", query = "SELECT obj FROM LobbyEntity obj WHERE obj.event = :event AND obj.started = false AND ((obj.lobbyDateTimeStart between :dateTime1 AND :dateTime2) OR (obj.isReserved = false)) AND obj.isPrivate = false "), //
+		@NamedQuery(name = "LobbyEntity.findByEventAndPersona", query = "SELECT obj FROM LobbyEntity obj WHERE obj.started = false AND obj.event = :event AND ((obj.lobbyDateTimeStart between :dateTime1 AND :dateTime2) OR (obj.isReserved = falsel)) AND obj.isPrivate = true AND obj.personaId = :personaId "), //
+		@NamedQuery(name = "LobbyEntity.findByHosterPersona", query = "SELECT obj FROM LobbyEntity obj WHERE obj.started = false AND obj.personaId = :personaId "), //
+		@NamedQuery(name = "LobbyEntity.isThisLobbyReserved", query = "SELECT obj FROM LobbyEntity obj WHERE obj.started = false AND obj.id = :id AND obj.isReserved = false "), //
 		@NamedQuery(name = "LobbyEntity.deleteAll", query = "DELETE FROM LobbyEntity obj") //
 })
 public class LobbyEntity {

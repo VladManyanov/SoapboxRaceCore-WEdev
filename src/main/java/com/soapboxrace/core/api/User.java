@@ -107,7 +107,9 @@ public class User {
 		PersonaEntity personaEntity = personaBO.getPersonaById(personaId);
 		friendBO.sendXmppPresenceToAllFriends(personaEntity, 0);
 		matchmakingBO.resetIgnoredEvents(personaId);
+		matchmakingBO.removePlayerFromQueue(personaId);
 		tokenBO.setSearchEventId(personaId, 0);
+		tokenBO.setMapHostedEvent(personaId, false);
 		tokenBO.setActiveLobbyId(securityToken, 0L);
 		friendBO.sendXmppPresenceToAllFriends(personaEntity, 0);
 		tokenBO.setActivePersonaId(securityToken, 0L, true);
@@ -128,8 +130,10 @@ public class User {
 		lobbyBO.deleteLobbyEntrant(activePersonaId, tokenBO.getActiveLobbyId(securityToken)); // Remove the player from current lobby, if any present
 		
 		matchmakingBO.resetIgnoredEvents(activePersonaId);
+		matchmakingBO.removePlayerFromQueue(activePersonaId);
 		PersonaEntity personaEntity = personaBO.getPersonaById(activePersonaId);
 		tokenBO.setSearchEventId(activePersonaId, 0);
+		tokenBO.setMapHostedEvent(activePersonaId, false);
 		tokenBO.setActiveLobbyId(securityToken, 0L);
 		personaPresenceDAO.userQuitUpdate(userId);
 		friendBO.sendXmppPresenceToAllFriends(personaEntity, 0);

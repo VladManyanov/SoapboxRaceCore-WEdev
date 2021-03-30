@@ -37,42 +37,35 @@ public class LobbyDAO extends BaseDAO<LobbyEntity> {
 	// Search for Race Now, takes 3 tries, depending on car class and lobbies variety
 	// Note: that createQuery action takes 7 ms just to fetch
 	public List<LobbyEntity> findAllMPLobbies(int carClassHash, int raceFilter, int searchStage, boolean isSClassFilterActive) {
-		// System.out.println("### findAllMPLobbies, searchStage: " + searchStage);
+		//System.out.println("### findAllMPLobbies, searchStage: " + searchStage);
 		Date dateNow = new Date();
 		Date datePast = new Date(dateNow.getTime() - (parameterBO.getIntParam("LOBBY_TIME") - 8000)); // Don't count the last 8 seconds of lobby life-time
 		entityManager.setFlushMode(FlushModeType.COMMIT);
 		
 		TypedQuery<LobbyEntity> query = entityManager.createQuery(getSqlLobbySearch(raceFilter, searchStage, carClassHash, isSClassFilterActive), LobbyEntity.class);
-		// System.out.println("### findAllMPLobbies, query prepare end");
+		//System.out.println("### findAllMPLobbies, query prepare end");
 		query.setParameter("dateTime1", datePast);
 		query.setParameter("dateTime2", dateNow);
 		if (searchStage == 1) {
 			query.setParameter("carClassHash", carClassHash); // carClassHash will be requested only when finding class-restricted races
 		}
-		// System.out.println("### findAllMPLobbies, prepare");
+		//System.out.println("### findAllMPLobbies, prepare");
 		
 		List<LobbyEntity> resultList = query.getResultList();
-		if (resultList.isEmpty() && searchStage == 1) {
-			// System.out.println("### going to searchStage 2");
-			findAllMPLobbies(carClassHash, raceFilter, 2, isSClassFilterActive); 
-			// 1 to 2 - Repeat the search without strict class restriction, to class groups priority
-			// 2 to 3 - Wait for priority timeout, and repeat the search for all existing lobbies
-			// 3 - No lobbies at all, wait for new lobbies on Queue MM
-		}
-		// System.out.println("### lobbyDAO finished, searchStage " + searchStage);
+		//System.out.println("### lobbyDAO finished, searchStage " + searchStage + ", isEmpty: " + resultList.isEmpty());
 		return resultList;
 	}
 	
 	public String getSqlLobbySearch(int raceFilter, int searchStage, int carClassHash, boolean isSClassFilterActive) {
 		StringBuilder searchQuery = new StringBuilder();
-		// System.out.println("### findAllMPLobbies, getSqlLobbySearch");
+		//System.out.println("### findAllMPLobbies, getSqlLobbySearch");
 		searchQuery.append("SELECT obj FROM LobbyEntity obj "); // SELECT command
-		searchQuery.append("WHERE obj.started = false AND ((obj.lobbyDateTimeStart between :dateTime1 and :dateTime2) OR (obj.lobbyDateTimeStart = null))"); // Lobby should be available to search
+		searchQuery.append("WHERE obj.started = false AND ((obj.lobbyDateTimeStart between :dateTime1 and :dateTime2) OR (obj.isReserved = false)) "); // Lobby should be available to search
 		searchQuery.append("AND obj.isPrivate = false AND obj.event.searchAvailable = true "); // Not private, and the event itself should be allowed for search
 		searchQuery.append(getSqlClassFilter(searchStage, carClassHash, isSClassFilterActive)); // Class restriction
 		searchQuery.append(getSqlRaceFilter(raceFilter, carClassHash)); // Event type action
 		searchQuery.append("ORDER BY obj.lobbyDateTimeStart ASC "); // Order lobbies by start time
-		// System.out.println("### findAllMPLobbies, getSqlLobbySearch End");
+		//System.out.println("### findAllMPLobbies, getSqlLobbySearch End: " + searchQuery.toString());
 		return searchQuery.toString();
 	}
 	
@@ -87,26 +80,31 @@ public class LobbyDAO extends BaseDAO<LobbyEntity> {
 			case 2: 
 				switch (CarClassType.valueOf(carClassHash)) {
 				case S_CLASS: // S Class group
-					append = "AND obj.event.carClassHash = " + SClassInt + " ";
+					append = "AND obj.carClassHash = " + SClassInt + " ";
 					break;
 				case A_CLASS:
 				case B_CLASS: // A-B Classes group
-					append = "AND ((obj.event.carClassHash = " + CarClassType.A_CLASS.getId() + ") OR (obj.event.carClassHash = " + CarClassType.B_CLASS.getId() + ")) ";
+					append = "AND ((obj.carClassHash = " + CarClassType.A_CLASS.getId() + ") OR (obj.carClassHash = " + CarClassType.B_CLASS.getId() + ")) ";
 					break;
 				case C_CLASS:
 				case D_CLASS:
 				case E_CLASS: // C-D-E Classes group
-					append = "AND ((obj.event.carClassHash = " + CarClassType.C_CLASS.getId() + ") OR (obj.event.carClassHash = " + CarClassType.D_CLASS.getId() +
-					") OR (obj.event.carClassHash = " + CarClassType.E_CLASS.getId() + ")) ";
+					append = "AND ((obj.carClassHash = " + CarClassType.C_CLASS.getId() + ") OR (obj.carClassHash = " + CarClassType.D_CLASS.getId() +
+					") OR (obj.carClassHash = " + CarClassType.E_CLASS.getId() + ")) ";
 					break;
 				default:
 					break;
 				}
 				break;
 			case 3:
-				append = "AND obj.event.carClassHash = " + CarClassType.OPEN_CLASS.getId() + " ";
-				if (carClassHash == SClassInt && isSClassFilterActive) { // Search for races, which is hosted by S-Class drivers
-					append = "AND obj.carClassHash = " + SClassInt + " ";
+				if (isSClassFilterActive) { // With separate S-Class
+					append = "AND obj.event.carClassHash = " + CarClassType.OPEN_CLASS.getId() + " AND obj.carClassHash <> + " + SClassInt + " ";
+					if (carClassHash == SClassInt) { // Search for races, which is hosted by S-Class drivers
+						append = "AND obj.carClassHash = " + SClassInt + " ";
+					}
+				}
+				else { // Without separate S-Class
+					append = "AND obj.event.carClassHash = " + CarClassType.OPEN_CLASS.getId() + " ";
 				}
 				break;
 			}
@@ -114,7 +112,7 @@ public class LobbyDAO extends BaseDAO<LobbyEntity> {
 		else {
 			append = "AND obj.event.carClassHash = " + CarClassType.OPEN_CLASS.getId() + " ";
 		}
-		// System.out.println("### findAllMPLobbies, getSqlClassFilter");
+		//System.out.println("### findAllMPLobbies, getSqlClassFilter");
 		return append;
 	}
 	
@@ -144,7 +142,7 @@ public class LobbyDAO extends BaseDAO<LobbyEntity> {
 		else {
 			append = "AND obj.event.eventModeId <> " + EventModeType.DRAG.getId() + " ";
 		}
-		// System.out.println("### findAllMPLobbies, getSqlRaceFilter");
+		//System.out.println("### findAllMPLobbies, getSqlRaceFilter");
 		return append;
 	}
 	

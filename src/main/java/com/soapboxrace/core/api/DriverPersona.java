@@ -18,6 +18,7 @@ import javax.ws.rs.core.Response;
 import com.soapboxrace.core.api.util.Secured;
 import com.soapboxrace.core.bo.DriverPersonaBO;
 import com.soapboxrace.core.bo.FriendBO;
+import com.soapboxrace.core.bo.MatchmakingBO;
 import com.soapboxrace.core.bo.ParameterBO;
 import com.soapboxrace.core.bo.TokenSessionBO;
 import com.soapboxrace.core.bo.UserBO;
@@ -64,6 +65,9 @@ public class DriverPersona {
 	
 	@EJB
 	private PersonaPresenceDAO personaPresenceDAO;
+	
+	@EJB
+	private MatchmakingBO matchmakingBO;
 
 	// Level calc - summary amount of EXP for all levels, consider a DB's level_rep values to sum for every level stage
 	// DB's level exp calc by Metonator's EXP generator
@@ -273,6 +277,7 @@ public class DriverPersona {
 		PersonaEntity personaEntity = personaDAO.findById(activePersonaId);
 		personaPresenceDAO.updatePersonaPresence(activePersonaId, presence);
 		friendBO.sendXmppPresenceToAllFriends(personaEntity, presence);
+		matchmakingBO.removePlayerFromQueue(activePersonaId);
 		return "";
 	}
 

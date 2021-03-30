@@ -331,11 +331,8 @@ public class MatchmakingBO {
      * @param eventEntity Entity of the event
      */
     public void ignoreEvent(long personaId, EventEntity eventEntity) {
-    	// Event will be ignored only when player is on Race Now search
-        if (mmQueuePlayers.containsKey(personaId)) {
-        	getIgnoredEvents(personaId).add((long) eventEntity.getId());
-        	openFireSoapBoxCli.send(XmppChat.createSystemMessage("### " + eventEntity.getName() + " will be ignored in the Race Now search for a while."), personaId);
-        }
+        getIgnoredEvents(personaId).add((long) eventEntity.getId());
+        openFireSoapBoxCli.send(XmppChat.createSystemMessage("### " + eventEntity.getName() + " will be ignored in the Race Now search for a while."), personaId);
     }
     
     /**
@@ -376,7 +373,7 @@ public class MatchmakingBO {
     }
 
     @Asynchronous
-    @Lock(LockType.READ)
+    @Lock(LockType.READ) // TODO
     public void handlePersonaPresenceUpdated(PersonaPresenceEntity personaPresenceEntity) {
         removePlayerFromQueue(personaPresenceEntity.getActivePersonaId());
     }

@@ -66,6 +66,7 @@ public class Events {
 		personaPresenceDAO.updateCurrentEventPost(activePersonaId, null, 0, null, false);
 		matchmakingBO.resetIgnoredEvents(activePersonaId);
 		tokenSessionBO.setSearchEventId(activePersonaId, 0);
+		tokenSessionBO.setMapHostedEvent(activePersonaId, false);
 		OwnedCarTrans defaultCar = personaBO.getDefaultCar(activePersonaId);
 		CustomCarTrans customCarTrans = defaultCar.getCustomCar();
 		int carClassHash = customCarTrans.getCarClassHash();

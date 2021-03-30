@@ -324,6 +324,18 @@ public class TokenSessionBO {
 		tokenSessionEntity.setSearchEventId(eventId);
 		tokenDAO.update(tokenSessionEntity);
 	}
+	
+	public boolean isMapHostedEvent(String securityToken) {
+		TokenSessionEntity tokenSessionEntity = tokenDAO.findBySecurityToken(securityToken);
+		return tokenSessionEntity.isMapHostedEvent();
+	}
+	
+	// Does the player starts a queue from map?
+	public void setMapHostedEvent(Long activePersonaId, boolean mapHostedEvent) {
+		TokenSessionEntity tokenSessionEntity = tokenDAO.findByActivePersonaId(activePersonaId);
+		tokenSessionEntity.setMapHostedEvent(mapHostedEvent);
+		tokenDAO.update(tokenSessionEntity);
+	}
 
 	public boolean isPremium(String securityToken) {
 		return tokenDAO.findBySecurityToken(securityToken).isPremium();
