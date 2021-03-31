@@ -45,7 +45,7 @@ public class LobbyEntrantDAO extends BaseDAO<LobbyEntrantEntity> {
 	public boolean isLobbyEmpty(LobbyEntity lobbyEntity) {
 		TypedQuery<LobbyEntrantEntity> query = entityManager.createNamedQuery("LobbyEntrantEntity.isLobbyEmpty", LobbyEntrantEntity.class);
 		query.setParameter("lobby", lobbyEntity);
-		return (query.getResultList() != null && !query.getResultList().isEmpty() ) ? false : true;
+		return !query.getResultList().isEmpty() ? false : true;
 	}
 	
 	public int getPlayerCount(LobbyEntity lobbyEntity) { // Use the same query as "isLobbyEmpty"

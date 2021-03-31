@@ -72,25 +72,26 @@ public class LobbyDAO extends BaseDAO<LobbyEntity> {
 	public String getSqlClassFilter(int searchStage, int carClassHash, boolean isSClassFilterActive) {
 		String append = "";
 		int SClassInt = CarClassType.S_CLASS.getId();
+		String appendOpenClass = "AND obj.event.carClassHash = " + CarClassType.OPEN_CLASS.getId() + " ";
 		if (carClassHash != CarClassType.MISC.getId()) { // If player wants to drive Drift-Spec or Traffic car, he just should get open events
 			switch (searchStage) {
-			case 1:
+			case 1: // Only class-restricted races
 				append = "AND obj.event.carClassHash = :carClassHash ";
 				break;
 			case 2: 
 				switch (CarClassType.valueOf(carClassHash)) {
 				case S_CLASS: // S Class group
-					append = "AND obj.carClassHash = " + SClassInt + " ";
+					append = "AND obj.carClassHash = " + SClassInt + " " + appendOpenClass;
 					break;
 				case A_CLASS:
 				case B_CLASS: // A-B Classes group
-					append = "AND ((obj.carClassHash = " + CarClassType.A_CLASS.getId() + ") OR (obj.carClassHash = " + CarClassType.B_CLASS.getId() + ")) ";
+					append = "AND ((obj.carClassHash = " + CarClassType.A_CLASS.getId() + ") OR (obj.carClassHash = " + CarClassType.B_CLASS.getId() + ")) " + appendOpenClass;
 					break;
 				case C_CLASS:
 				case D_CLASS:
 				case E_CLASS: // C-D-E Classes group
 					append = "AND ((obj.carClassHash = " + CarClassType.C_CLASS.getId() + ") OR (obj.carClassHash = " + CarClassType.D_CLASS.getId() +
-					") OR (obj.carClassHash = " + CarClassType.E_CLASS.getId() + ")) ";
+					") OR (obj.carClassHash = " + CarClassType.E_CLASS.getId() + ")) " + appendOpenClass;
 					break;
 				default:
 					break;

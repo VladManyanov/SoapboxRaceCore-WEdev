@@ -83,7 +83,8 @@ public class MatchmakingBO {
      * @param eventMaxPlayers How much players that event can have
      * @return List of personas (by ID) which is able to participate
      */
-    public List<Long> getPlayersFromQueue(Integer carClass, int eventModeId, int hosterCarClass, boolean isSClassFilterActive, int eventMaxPlayers) {
+    public List<Long> getPlayersFromQueue(Integer carClass, int eventModeId, int hosterCarClass, boolean isSClassFilterActive, 
+    		int eventMaxPlayers, int eventId) {
         // System.out.println("### getPlayerFromQueue");
         List<Long> readyPlayers = new ArrayList<Long>();
         long personaId = -1L;
@@ -97,12 +98,12 @@ public class MatchmakingBO {
             int playerRaceFilter = Integer.parseInt(playerVehicleInfo[1]);
             int isAvailable = Integer.parseInt(playerVehicleInfo[2]);
             int searchStage = Integer.parseInt(playerVehicleInfo[3]);
+            personaId = queueEntry.getKey();
             // System.out.println("### getPlayerFromQueue 2");
             
             // System.out.println("### playerCarClass: " + Integer.parseInt(playerVehicleInfo[0]) + ", playerRaceFilter: " + Integer.parseInt(playerVehicleInfo[1]) + ", searchStage: " + Integer.parseInt(playerVehicleInfo[3]) + ", isAvailable: " + Integer.parseInt(playerVehicleInfo[2]) + " arrayLength: " + playerVehicleInfo.length);
             if (checkPlayerQueueRequirements(playerCarClass, playerRaceFilter, searchStage, carClass, eventModeId, 
-            		hosterCarClass, isSClassFilterActive, isAvailable)) {
-                personaId = queueEntry.getKey();
+            		hosterCarClass, isSClassFilterActive, isAvailable) && !isEventIgnored(personaId, eventId)) {
                 String newPlayerVehicleInfo = playerCarClass + "," + playerRaceFilter + "," + 0 + "," + 0; // This entrant is not available for new invites
                 mmQueuePlayers.replace(personaId, newPlayerVehicleInfo);
                 // System.out.println("### getPlayerFromQueue FINAL");

@@ -45,7 +45,7 @@ import com.soapboxrace.core.jpa.AchievementStateEntity;
 import com.soapboxrace.core.jpa.BadgeDefinitionEntity;
 import com.soapboxrace.core.jpa.BadgePersonaEntity;
 import com.soapboxrace.core.jpa.EventDataEntity;
-import com.soapboxrace.core.jpa.LobbyEntity;
+import com.soapboxrace.core.jpa.EventSessionEntity;
 import com.soapboxrace.core.jpa.PersonaEntity;
 import com.soapboxrace.core.jpa.ProductEntity;
 import com.soapboxrace.core.jpa.RewardDropEntity;
@@ -1029,8 +1029,8 @@ public class AchievementsBO {
 		TokenSessionEntity tokenSessionEntity = tokenSessionDAO.findByUserId(personaEntity.getUser().getId());
 		Long activeLobbyId = tokenSessionEntity.getActiveLobbyId();
 		if (!activeLobbyId.equals(0l)) {
-			LobbyEntity lobbyEntity = lobbyDAO.findById(activeLobbyId);
-			if (!lobbyEntity.getIsPrivate()) {
+			EventSessionEntity eventSessionEntity = eventSessionDAO.findById(eventDataEntity.getEventSessionId());
+			if (!eventSessionEntity.isPrivate()) {
 				if (dragArbitrationPacket.getRank() == 1) {
 					AchievementPersonaEntity achievementPersonaEntity = achievementPersonaDAO.findByPersona(personaEntity);
 					int mpDragWins = achievementPersonaEntity.getMpDragWins();

@@ -315,6 +315,7 @@ public class TokenSessionBO {
 	
 	public int getSearchEventId(String securityToken) {
 		TokenSessionEntity tokenSessionEntity = tokenDAO.findBySecurityToken(securityToken);
+		System.out.println("### getSearchEventId: " + tokenSessionEntity.getSearchEventId());
 		return tokenSessionEntity.getSearchEventId();
 	}
 	
@@ -323,6 +324,7 @@ public class TokenSessionBO {
 		TokenSessionEntity tokenSessionEntity = tokenDAO.findByActivePersonaId(activePersonaId);
 		tokenSessionEntity.setSearchEventId(eventId);
 		tokenDAO.update(tokenSessionEntity);
+		System.out.println("### setSearchEventId: " + eventId);
 	}
 	
 	public boolean isMapHostedEvent(String securityToken) {

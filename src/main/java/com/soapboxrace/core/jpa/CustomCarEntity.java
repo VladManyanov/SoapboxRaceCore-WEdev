@@ -54,31 +54,31 @@ public class CustomCarEntity {
 	private OwnedCarEntity ownedCar;
 
 	@OneToMany(mappedBy = "customCar", targetEntity = PaintEntity.class,
-            orphanRemoval = true, cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH})
+            cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH})
     @LazyCollection(LazyCollectionOption.FALSE)
     @Fetch(FetchMode.SUBSELECT)
     private Set<PaintEntity> paints;
 
     @OneToMany(mappedBy = "customCar", targetEntity = PerformancePartEntity.class,
-            orphanRemoval = true, cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH})
+            cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH})
     @LazyCollection(LazyCollectionOption.FALSE)
     @Fetch(FetchMode.SUBSELECT)
     private Set<PerformancePartEntity> performanceParts;
 
     @OneToMany(mappedBy = "customCar", targetEntity = SkillModPartEntity.class,
-            orphanRemoval = true, cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH})
+            cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH})
     @LazyCollection(LazyCollectionOption.FALSE)
     @Fetch(FetchMode.SUBSELECT)
     private Set<SkillModPartEntity> skillModParts;
 
     @OneToMany(mappedBy = "customCar", targetEntity = VinylEntity.class,
-            orphanRemoval = true, cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH})
+            cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH})
     @LazyCollection(LazyCollectionOption.FALSE)
     @Fetch(FetchMode.SUBSELECT)
     private Set<VinylEntity> vinyls;
 
     @OneToMany(mappedBy = "customCar", targetEntity = VisualPartEntity.class,
-            orphanRemoval = true, cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH})
+            cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH})
     @LazyCollection(LazyCollectionOption.FALSE)
     @Fetch(FetchMode.SUBSELECT)
     private Set<VisualPartEntity> visualParts;

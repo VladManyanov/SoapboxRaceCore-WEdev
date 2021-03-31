@@ -1,7 +1,6 @@
 package com.soapboxrace.core.bo;
 
 import java.nio.ByteBuffer;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Collections;
@@ -148,7 +147,7 @@ public class LobbyCountdownBO {
 		String udpRaceIp = parameterBO.getStrParam("UDP_RACE_IP");
 		eventSessionDao.insert(eventSessionEntity);
 		
-		boolean isInterceptorEvent = EventModeType.INTERCEPTOR.equals(eventEntity.getEventModeId()) ? true : false;
+		boolean isInterceptorEvent = EventModeType.INTERCEPTOR.getId() == eventEntity.getEventModeId() ? true : false;
 		String timeLimit = "!pls fix!";
 		List<Long> personaCops = new ArrayList<Long>();
 		List<Long> personaRacers = new ArrayList<Long>();

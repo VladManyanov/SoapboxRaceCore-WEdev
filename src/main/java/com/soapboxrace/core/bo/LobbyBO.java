@@ -189,16 +189,14 @@ public class LobbyBO {
 		if (!isPrivate) { // Queue Matchmaking
 	        //System.out.println("### Get the players...");
 	        List<Long> queuePlayers = matchmakingBO.getPlayersFromQueue(eventClass, eventEntity.getEventModeId(), 
-	        		carClassHash, isSClassFilterActive, eventMaxPlayers);
+	        		carClassHash, isSClassFilterActive, eventMaxPlayers, eventId);
 
 	        for (Long queuePlayer : queuePlayers) {
-	        	if (!queuePlayer.equals(personaId) && !matchmakingBO.isEventIgnored(queuePlayer, eventId)) { // Hoster cannot be invited
+	        	if (!queuePlayer.equals(personaId)) { // Hoster cannot be invited
 		            //System.out.println("### Get the player THERE...");
 		            sendJoinEvent(queuePlayer, lobbyEntity, eventId, false);
-		            //System.out.println("### Get the player DONE");
 		        }
 	        }
-
 			if (queuePlayers.size() > 0) {
 				//System.out.println("### Get the player ACTIVE");
             	sendJoinEvent(personaId, lobbyEntity, eventId, false);
@@ -274,7 +272,7 @@ public class LobbyBO {
 			if (!personaId.equals(hosterPersonaId) && !lobbyEntityNew.isReserved()) {
 				//System.out.println("callbackRequest for " + hosterPersonaId);
 				setIsLobbyReserved(lobbyEntityNew, true);
-				sendJoinEvent(hosterPersonaId, lobbyEntityNew, eventId, false); // Send the join request for race hoster
+				sendJoinEvent(hosterPersonaId, lobbyEntityNew, lobbyEntityNew.getEvent().getId(), false); // Send the join request for race hoster
 				lobbyEntityNew.setLobbyDateTimeStart(new Date());
 				lobbyDao.update(lobbyEntityNew);
 				lobbyCountdownBO.scheduleLobbyStart(lobbyEntityNew);
@@ -320,6 +318,7 @@ public class LobbyBO {
 			System.out.println("### acceptinvite for 113");
 		}
 		tokenSessionBO.setMapHostedEvent(personaId, false);
+		matchmakingBO.removePlayerFromQueue(personaId); // Again, just to be sure
 		LobbyEntity lobbyEntity = lobbyDao.findById(lobbyInviteId);
 		EventEntity eventEntity = lobbyEntity.getEvent();
 		int eventId = eventEntity.getId();	

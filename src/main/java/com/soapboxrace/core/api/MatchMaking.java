@@ -232,12 +232,13 @@ public class MatchMaking {
 	@Produces(MediaType.APPLICATION_XML)
 	public String declineInvite(@HeaderParam("securityToken") String securityToken, @QueryParam("lobbyInviteId") Long lobbyInviteId) {
 		LobbyEntity lobbyEntity = lobbyDAO.findById(lobbyInviteId);
-		EventEntity eventEntity = eventDAO.findById(tokenSessionBO.getSearchEventId(securityToken));
+		int searchEventId = tokenSessionBO.getSearchEventId(securityToken);
+		EventEntity eventEntity = eventDAO.findById(searchEventId);
 		lobbyCountdownBO.shutdownLobbyAlt(lobbyEntity);
 		tokenSessionBO.setActiveLobbyId(securityToken, 0L);
 		Long activePersonaId = tokenSessionBO.getActivePersonaId(securityToken);
 		PersonaEntity personaEntity = personaDAO.findById(activePersonaId);
-		if (!tokenSessionBO.isMapHostedEvent(securityToken) && personaEntity.isIgnoreRaces()) {
+		if (!tokenSessionBO.isMapHostedEvent(securityToken) && personaEntity.isIgnoreRaces() && searchEventId != 0) { // For some reason, searchEventId can be 0 at this point
 			matchmakingBO.ignoreEvent(activePersonaId, eventEntity);
 			//System.out.println("### /declineinvite ignore");
 		}
