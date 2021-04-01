@@ -18,15 +18,21 @@ import com.soapboxrace.core.bo.AchievementsBO;
 import com.soapboxrace.core.bo.EventBO;
 import com.soapboxrace.core.bo.EventResultBO;
 import com.soapboxrace.core.bo.FriendBO;
+import com.soapboxrace.core.bo.LobbyCountdownBO;
 import com.soapboxrace.core.bo.MatchmakingBO;
 import com.soapboxrace.core.bo.TokenSessionBO;
 import com.soapboxrace.core.bo.util.EventModeType;
 import com.soapboxrace.core.dao.EventDataDAO;
+import com.soapboxrace.core.dao.EventSessionDAO;
+import com.soapboxrace.core.dao.LobbyDAO;
 import com.soapboxrace.core.dao.PersonaDAO;
 import com.soapboxrace.core.dao.PersonaPresenceDAO;
+import com.soapboxrace.core.engine.EngineException;
+import com.soapboxrace.core.engine.EngineExceptionCode;
 import com.soapboxrace.core.jpa.EventDataEntity;
 import com.soapboxrace.core.jpa.EventEntity;
 import com.soapboxrace.core.jpa.EventSessionEntity;
+import com.soapboxrace.core.jpa.LobbyEntity;
 import com.soapboxrace.core.jpa.PersonaPresenceEntity;
 import com.soapboxrace.core.xmpp.OpenFireSoapBoxCli;
 import com.soapboxrace.jaxb.http.DragArbitrationPacket;
@@ -71,6 +77,15 @@ public class Event {
 	
 	@EJB
 	private MatchmakingBO matchmakingBO;
+	
+	@EJB
+	private EventSessionDAO eventSessionDAO;
+	
+	@EJB
+	private LobbyDAO lobbyDAO;
+	
+	@EJB
+	private LobbyCountdownBO lobbyCountdownBO;
 
 	@POST
 	@Secured
@@ -108,6 +123,16 @@ public class Event {
 		default: break;
 		}
 		matchmakingBO.resetIgnoredEvents(activePersonaId);
+		
+		Long lobbyId = eventSessionDAO.findById(eventSessionId).getLobbyId();
+		if (lobbyId != 0) { // If everyone exists from that race, preserved lobby must be removed
+			LobbyEntity lobbyEntity = lobbyDAO.findById(lobbyId);
+			if (lobbyEntity == null) { 
+				System.out.println("### Lobby abort error (eventSessionId: " + eventSessionId + "), lobby doesn't exist!");
+				throw new EngineException(EngineExceptionCode.GameDoesNotExist, false);
+			}
+			lobbyCountdownBO.shutdownLobbyAbort(lobbyEntity);
+		}
 		return "";
 	}
 

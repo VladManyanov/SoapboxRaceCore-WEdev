@@ -285,18 +285,17 @@ public class LobbyCountdownBO {
 		lobbyDao.delete(lobbyEntity);
 	}
 	
-	// Delete the empty lobby
+	// Delete the empty lobby; however private lobby will stay until the timeout
 	public void shutdownLobby(LobbyEntity lobbyEntity) {
-		if (lobbyEntity != null && !lobbyEntity.isStarted() && lobbyEntrantDAO.isLobbyEmpty(lobbyEntity)) { 
+		if (lobbyEntity != null && !lobbyEntity.isStarted() && lobbyEntrantDAO.isLobbyEmpty(lobbyEntity) && !lobbyEntity.getIsPrivate()) { 
+			//System.out.println("### shutdownLobby"); 
 			endLobby(lobbyEntity);
-			//System.out.println("### shutdownLobby");
 		}
 	}
 	
-	// Delete the empty lobby; however private lobby will stay until the timeout
-	public void shutdownLobbyAlt(LobbyEntity lobbyEntity) {
-		if (lobbyEntity != null && !lobbyEntity.isStarted() && lobbyEntrantDAO.isLobbyEmpty(lobbyEntity) && !lobbyEntity.getIsPrivate()) { 
-			//System.out.println("### shutdownLobbyAlt"); 
+	// Delete the empty started lobby
+	public void shutdownLobbyAbort(LobbyEntity lobbyEntity) {
+		if (lobbyEntity != null && lobbyEntity.isStarted() && lobbyEntrantDAO.isLobbyEmpty(lobbyEntity)) { 
 			endLobby(lobbyEntity);
 		}
 	}

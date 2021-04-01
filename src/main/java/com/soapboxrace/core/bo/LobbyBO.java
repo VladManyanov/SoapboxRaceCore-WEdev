@@ -1,5 +1,6 @@
 package com.soapboxrace.core.bo;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
@@ -94,18 +95,18 @@ public class LobbyBO {
 		PersonaEntity personaEntity = personaDao.findById(personaId);
 		//System.out.println("### joinFastLobby, searchStage: " + searchStage);
 		List<LobbyEntity> lobbys = lobbyDao.findAllMPLobbies(carClassHash, raceFilter, searchStage, isSClassFilterActive);
+		if (searchStage == 1) {lobbys = checkIgnoreLobbies(personaEntity, lobbys);}
 		
 		if (lobbys.isEmpty() && searchStage == 1) {
 			//System.out.println("### going to searchStage 2");
 			lobbys = lobbyDao.findAllMPLobbies(carClassHash, raceFilter, 2, isSClassFilterActive); 
+			// If class-restricted and class group search is not succeed, initiate Priority Class Group search
+			searchStage = 2;
 			// 1 to 2 - Repeat the search without strict class restriction, to class groups priority
 			// 2 to 3 - Wait for priority timeout, and repeat the search for all existing lobbies
 			// 3 - No lobbies at all, wait for new lobbies on Queue MM
 		}
-		
-		if (lobbys.isEmpty() && searchStage == 1) { // If class-restricted and class group search is not succeed, initiate Priority Class Group search
-			searchStage = 2;
-		}
+		lobbys = checkIgnoreLobbies(personaEntity, lobbys);
 		
 		if (lobbys.isEmpty()) {
 			matchmakingBO.addPlayerToQueue(personaId, carClassHash, raceFilter, 1, searchStage);
@@ -241,7 +242,7 @@ public class LobbyBO {
 			int hosterCarClass = lobbyEntityCheck.getCarClassHash();
 			
 			if ((lobbyEntityCheck.getPersonaId().equals(personaId) && !lobbyEntityCheck.isReserved()) || // Player cannot join the lobby, which is being hosted by player himself and not yet populated
-				(checkIgnoredEvents && matchmakingBO.isEventIgnored(personaId, eventId)) || // This event is being ignored by player, look for others
+			//	(checkIgnoredEvents && matchmakingBO.isEventIgnored(personaId, eventId)) || // This event is being ignored by player, look for others
 				(isSClassFilterActive && !matchmakingBO.isSClassFilterAllowed(playerCarHash, hosterCarClass, eventEntity.getCarClassHash(), isSClassFilterActive))) { // S-Class filter check (if parameter is active)
 				continue; 
 			}
@@ -458,5 +459,21 @@ public class LobbyBO {
 			return time.intValue();
 		}
 		return time.intValue();
+	}
+	
+	private List<LobbyEntity> checkIgnoreLobbies(PersonaEntity personaEntity, List<LobbyEntity> lobbys) {
+		List<LobbyEntity> lobbysNew = new ArrayList<>();
+		Long personaId = personaEntity.getPersonaId();
+		if (personaEntity.isIgnoreRaces()) { 
+			for (LobbyEntity lobbyCheck : lobbys) { // Make new lobby-list without ignored events
+				if (!matchmakingBO.isEventIgnored(personaId, lobbyCheck.getEvent().getId())) {
+					lobbysNew.add(lobbyCheck);
+				}
+			}
+		}
+		else { // Use the same list without ignore-check
+			lobbysNew = lobbys;
+		}
+		return lobbysNew;
 	}
 }

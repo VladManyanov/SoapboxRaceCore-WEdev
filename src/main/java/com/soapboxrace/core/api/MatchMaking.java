@@ -23,12 +23,14 @@ import com.soapboxrace.core.bo.MatchmakingBO;
 import com.soapboxrace.core.bo.ParameterBO;
 import com.soapboxrace.core.bo.PersonaBO;
 import com.soapboxrace.core.bo.TokenSessionBO;
+import com.soapboxrace.core.bo.util.CarClassType;
 import com.soapboxrace.core.dao.CarClassesDAO;
 import com.soapboxrace.core.dao.EventDAO;
 import com.soapboxrace.core.dao.LobbyDAO;
 import com.soapboxrace.core.dao.LobbyEntrantDAO;
 import com.soapboxrace.core.dao.PersonaDAO;
 import com.soapboxrace.core.dao.PersonaPresenceDAO;
+import com.soapboxrace.core.dao.TokenSessionDAO;
 import com.soapboxrace.core.engine.EngineException;
 import com.soapboxrace.core.engine.EngineExceptionCode;
 import com.soapboxrace.core.jpa.CarClassesEntity;
@@ -36,6 +38,8 @@ import com.soapboxrace.core.jpa.EventEntity;
 import com.soapboxrace.core.jpa.EventSessionEntity;
 import com.soapboxrace.core.jpa.LobbyEntity;
 import com.soapboxrace.core.jpa.PersonaEntity;
+import com.soapboxrace.core.jpa.PersonaPresenceEntity;
+import com.soapboxrace.core.jpa.TokenSessionEntity;
 import com.soapboxrace.core.xmpp.OpenFireSoapBoxCli;
 import com.soapboxrace.core.xmpp.XmppChat;
 import com.soapboxrace.jaxb.http.CustomCarTrans;
@@ -97,6 +101,9 @@ public class MatchMaking {
 	@EJB
     private ParameterBO parameterBO;
 	
+	@EJB
+    private TokenSessionDAO tokenDAO;
+	
 	@Context
 	private HttpServletRequest sr;
 
@@ -109,7 +116,7 @@ public class MatchMaking {
 		CustomCarTrans customCar = personaBO.getDefaultCar(activePersonaId).getCustomCar();
 		int playerCarClass = customCar.getCarClassHash();
 		boolean isSClassFilterActive = parameterBO.getBoolParam("RACENOW_SCLASS_SEPARATE");
-		if (playerCarClass == -2142411446 && isSClassFilterActive) {
+		if (playerCarClass == CarClassType.S_CLASS.getId() && isSClassFilterActive) {
 			openFireSoapBoxCli.send(XmppChat.createSystemMessage("### S-Class cars matchmaking is separate."), activePersonaId);
 		}
 		CarClassesEntity carClassesEntity = carClassesDAO.findByHash(customCar.getPhysicsProfileHash());
@@ -147,9 +154,7 @@ public class MatchMaking {
 		LobbyEntity lobbyEntity = lobbyDAO.findByHosterPersona(activePersonaId);
 		lobbyCountdownBO.shutdownLobby(lobbyEntity);
 		//System.out.println("### /leavequeue");
-		tokenSessionBO.setActiveLobbyId(securityToken, 0L);
-		tokenSessionBO.setSearchEventId(activePersonaId, 0);
-		tokenSessionBO.setMapHostedEvent(activePersonaId, false);
+		tokenSessionBO.resetRaceNow(securityToken);
 		return "";
 	}
 
@@ -158,16 +163,15 @@ public class MatchMaking {
 	@Path("/leavelobby")
 	@Produces(MediaType.APPLICATION_XML)
 	public String leavelobby(@HeaderParam("securityToken") String securityToken) {
-		Long activePersonaId = tokenSessionBO.getActivePersonaId(securityToken);
-		Long activeLobbyId = tokenSessionBO.getActiveLobbyId(securityToken);
+		TokenSessionEntity tokenSessionEntity = tokenDAO.findBySecurityToken(securityToken);
+		Long activePersonaId = tokenSessionEntity.getActivePersonaId();
+		Long activeLobbyId = tokenSessionEntity.getActiveLobbyId();
 		if (activeLobbyId != null && !activeLobbyId.equals(0L)) {
 			lobbyBO.deleteLobbyEntrant(activePersonaId, activeLobbyId);
 		}
 		LobbyEntity lobbyEntity = lobbyDAO.findById(activeLobbyId);
-		lobbyCountdownBO.shutdownLobbyAlt(lobbyEntity);
-		tokenSessionBO.setActiveLobbyId(securityToken, 0L);
-		tokenSessionBO.setSearchEventId(activePersonaId, 0);
-		tokenSessionBO.setMapHostedEvent(activePersonaId, false);
+		lobbyCountdownBO.shutdownLobby(lobbyEntity);
+		tokenSessionBO.resetRaceNow(securityToken);
 		//System.out.println("### /leavelobby");
 		return "";
 	}
@@ -218,6 +222,10 @@ public class MatchMaking {
 		LobbyEntity checkLobbyEntity = lobbyDAO.findById(lobbyInviteId);
 		if (checkLobbyEntity == null) { // Since our requested lobby doesn't exist for some reason, we should create a new one
 			int playerCarClass = personaBO.getCurrentPlayerCarClass(activePersonaId);
+			
+			PersonaPresenceEntity personaPresenceEntity = personaPresenceDAO.findByUserId(tokenSessionBO.getUser(securityToken).getId());
+			System.out.println("### Debug /acceptinvite newLobby: + " + tokenSessionBO.getSearchEventId(securityToken) + " carClass " + playerCarClass + " persona " + activePersonaId + " eventSession " + personaPresenceEntity.getCurrentEventSessionId());
+			
 			lobbyInviteId = lobbyBO.createLobby(personaDAO.findById(activePersonaId), tokenSessionBO.getSearchEventId(securityToken), false, true, playerCarClass);
 			//System.out.println("### /acceptinvite newlobby");
 		}
@@ -232,19 +240,17 @@ public class MatchMaking {
 	@Produces(MediaType.APPLICATION_XML)
 	public String declineInvite(@HeaderParam("securityToken") String securityToken, @QueryParam("lobbyInviteId") Long lobbyInviteId) {
 		LobbyEntity lobbyEntity = lobbyDAO.findById(lobbyInviteId);
-		int searchEventId = tokenSessionBO.getSearchEventId(securityToken);
-		EventEntity eventEntity = eventDAO.findById(searchEventId);
-		lobbyCountdownBO.shutdownLobbyAlt(lobbyEntity);
-		tokenSessionBO.setActiveLobbyId(securityToken, 0L);
-		Long activePersonaId = tokenSessionBO.getActivePersonaId(securityToken);
+		TokenSessionEntity tokenSessionEntity = tokenDAO.findBySecurityToken(securityToken);
+		int searchEventId = tokenSessionEntity.getSearchEventId();
+		Long activePersonaId = tokenSessionEntity.getActivePersonaId();
+		lobbyCountdownBO.shutdownLobby(lobbyEntity);
 		PersonaEntity personaEntity = personaDAO.findById(activePersonaId);
-		if (!tokenSessionBO.isMapHostedEvent(securityToken) && personaEntity.isIgnoreRaces() && searchEventId != 0) { // For some reason, searchEventId can be 0 at this point
-			matchmakingBO.ignoreEvent(activePersonaId, eventEntity);
+		if (!tokenSessionEntity.isMapHostedEvent() && personaEntity.isIgnoreRaces() && searchEventId != 0) { // For some reason, searchEventId can be 0 at this point
+			matchmakingBO.ignoreEvent(activePersonaId, eventDAO.findById(searchEventId));
 			//System.out.println("### /declineinvite ignore");
 		}
 		matchmakingBO.removePlayerFromQueue(activePersonaId);
-		tokenSessionBO.setSearchEventId(activePersonaId, 0);
-		tokenSessionBO.setMapHostedEvent(activePersonaId, false);
+		tokenSessionBO.resetRaceNow(securityToken);
 		//System.out.println("### /declineinvite");
 		return "";
 	}

@@ -315,7 +315,7 @@ public class TokenSessionBO {
 	
 	public int getSearchEventId(String securityToken) {
 		TokenSessionEntity tokenSessionEntity = tokenDAO.findBySecurityToken(securityToken);
-		System.out.println("### getSearchEventId: " + tokenSessionEntity.getSearchEventId());
+		// System.out.println("### getSearchEventId: " + tokenSessionEntity.getSearchEventId());
 		return tokenSessionEntity.getSearchEventId();
 	}
 	
@@ -324,7 +324,7 @@ public class TokenSessionBO {
 		TokenSessionEntity tokenSessionEntity = tokenDAO.findByActivePersonaId(activePersonaId);
 		tokenSessionEntity.setSearchEventId(eventId);
 		tokenDAO.update(tokenSessionEntity);
-		System.out.println("### setSearchEventId: " + eventId);
+		// System.out.println("### setSearchEventId: " + eventId);
 	}
 	
 	public boolean isMapHostedEvent(String securityToken) {
@@ -336,6 +336,14 @@ public class TokenSessionBO {
 	public void setMapHostedEvent(Long activePersonaId, boolean mapHostedEvent) {
 		TokenSessionEntity tokenSessionEntity = tokenDAO.findByActivePersonaId(activePersonaId);
 		tokenSessionEntity.setMapHostedEvent(mapHostedEvent);
+		tokenDAO.update(tokenSessionEntity);
+	}
+	
+	public void resetRaceNow(String securityToken) {
+		TokenSessionEntity tokenSessionEntity = tokenDAO.findBySecurityToken(securityToken);
+		tokenSessionEntity.setMapHostedEvent(false);
+		tokenSessionEntity.setActiveLobbyId(0L);
+		tokenSessionEntity.setSearchEventId(0);
 		tokenDAO.update(tokenSessionEntity);
 	}
 
