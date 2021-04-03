@@ -166,9 +166,7 @@ public class MatchMaking {
 		TokenSessionEntity tokenSessionEntity = tokenDAO.findBySecurityToken(securityToken);
 		Long activePersonaId = tokenSessionEntity.getActivePersonaId();
 		Long activeLobbyId = tokenSessionEntity.getActiveLobbyId();
-		if (activeLobbyId != null && !activeLobbyId.equals(0L)) {
-			lobbyBO.deleteLobbyEntrant(activePersonaId, activeLobbyId);
-		}
+		lobbyBO.deleteLobbyEntrant(activePersonaId, activeLobbyId);
 		LobbyEntity lobbyEntity = lobbyDAO.findById(activeLobbyId);
 		lobbyCountdownBO.shutdownLobby(lobbyEntity);
 		tokenSessionBO.resetRaceNow(securityToken);

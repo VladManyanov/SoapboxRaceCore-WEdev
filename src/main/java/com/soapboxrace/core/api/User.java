@@ -28,7 +28,9 @@ import com.soapboxrace.core.bo.PersonaBO;
 import com.soapboxrace.core.bo.TokenSessionBO;
 import com.soapboxrace.core.bo.UserBO;
 import com.soapboxrace.core.dao.PersonaPresenceDAO;
+import com.soapboxrace.core.dao.TokenSessionDAO;
 import com.soapboxrace.core.jpa.PersonaEntity;
+import com.soapboxrace.core.jpa.TokenSessionEntity;
 import com.soapboxrace.jaxb.http.UserInfo;
 import com.soapboxrace.jaxb.login.LoginStatusVO;
 
@@ -70,6 +72,9 @@ public class User {
 	
 	@EJB
 	private MatchmakingBO matchmakingBO;
+	
+	@EJB
+	private TokenSessionDAO tokenDAO;
 
 	@POST
 	@Secured
@@ -108,9 +113,7 @@ public class User {
 		friendBO.sendXmppPresenceToAllFriends(personaEntity, 0);
 		matchmakingBO.resetIgnoredEvents(personaId);
 		matchmakingBO.removePlayerFromQueue(personaId);
-		tokenBO.setSearchEventId(personaId, 0);
-		tokenBO.setMapHostedEvent(personaId, false);
-		tokenBO.setActiveLobbyId(securityToken, 0L);
+		tokenBO.resetRaceNow(securityToken);
 		friendBO.sendXmppPresenceToAllFriends(personaEntity, 0);
 		tokenBO.setActivePersonaId(securityToken, 0L, true);
 		personaPresenceDAO.updateCurrentEventPost(personaId, null, 0, null, false);
@@ -122,19 +125,18 @@ public class User {
 	@Path("SecureLogout")
 	@Produces(MediaType.APPLICATION_XML)
 	public String secureLogout(@HeaderParam("securityToken") String securityToken) {
-		Long activePersonaId = tokenBO.getActivePersonaId(securityToken);
+		TokenSessionEntity tokenSessionEntity = tokenDAO.findBySecurityToken(securityToken);
+		Long activePersonaId = tokenSessionEntity.getActivePersonaId();
 		if (activePersonaId == null || activePersonaId.equals(0l)) {
 			return "";
 		}
-		Long userId = tokenBO.getUser(securityToken).getId();
-		lobbyBO.deleteLobbyEntrant(activePersonaId, tokenBO.getActiveLobbyId(securityToken)); // Remove the player from current lobby, if any present
-		
+		Long userId = tokenSessionEntity.getUserId();
+		Long activeLobbyId = tokenSessionEntity.getActiveLobbyId();
+		lobbyBO.deleteLobbyEntrant(activePersonaId, activeLobbyId); // Remove the player from current lobby, if any present
 		matchmakingBO.resetIgnoredEvents(activePersonaId);
 		matchmakingBO.removePlayerFromQueue(activePersonaId);
 		PersonaEntity personaEntity = personaBO.getPersonaById(activePersonaId);
-		tokenBO.setSearchEventId(activePersonaId, 0);
-		tokenBO.setMapHostedEvent(activePersonaId, false);
-		tokenBO.setActiveLobbyId(securityToken, 0L);
+		tokenBO.resetRaceNow(securityToken);
 		personaPresenceDAO.userQuitUpdate(userId);
 		friendBO.sendXmppPresenceToAllFriends(personaEntity, 0);
 		tokenBO.setActivePersonaId(securityToken, 0L, true);

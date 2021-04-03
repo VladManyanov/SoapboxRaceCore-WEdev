@@ -400,7 +400,7 @@ public class LobbyBO {
 	}
 
 	public void deleteLobbyEntrant(Long personaId, Long lobbyId) {
-		if (lobbyId != 0L) {
+		if (lobbyId != null && !lobbyId.equals(0L)) {
 			PersonaEntity personaEntity = personaDao.findById(personaId);
 			lobbyEntrantDao.deleteByPersona(personaEntity);
 			updateLobby(personaId, lobbyId);
