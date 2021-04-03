@@ -336,7 +336,7 @@ public class TeamsBO {
 	// Output teams leaderboard every hour into Discord
 	@Schedule(hour = "*/1", persistent = false)
 	public void teamStatsDiscord() {
-		if (parameterBO.getBoolParam("DISCORD_ONLINECOUNT") && parameterBO.getIntParam("TEAM_CURRENTSEASON") > 0) { // Season 0 deactivates team actions
+		if (parameterBO.getBoolParam("DISCORD_TEAMRACINGSTATS") && parameterBO.getIntParam("TEAM_CURRENTSEASON") > 0) { // Season 0 deactivates team actions
 			List<TeamsEntity> teamsList = teamsDao.findAllTeams(); // entire TOP message must fit on Discord's 2,000 symbols limitation
 			String seasonText = parameterBO.getStrParam("TEAM_SEASONTEXT");
 			String messageAppend = "";

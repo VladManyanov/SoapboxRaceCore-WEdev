@@ -320,10 +320,12 @@ public class TokenSessionBO {
 	}
 	
 	// Save the event ID value for search queue
-	public void setSearchEventId(Long activePersonaId, int eventId) {
+	public boolean setSearchEventId(Long activePersonaId, int eventId) {
 		TokenSessionEntity tokenSessionEntity = tokenDAO.findByActivePersonaId(activePersonaId);
+		if (tokenSessionEntity == null) {return false;} // If that activePersonaId is not active already...
 		tokenSessionEntity.setSearchEventId(eventId);
 		tokenDAO.update(tokenSessionEntity);
+		return true;
 		// System.out.println("### setSearchEventId: " + eventId);
 	}
 	

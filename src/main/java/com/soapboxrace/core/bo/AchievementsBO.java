@@ -722,7 +722,7 @@ public class AchievementsBO {
 				item.setTitle(boostFormat + " SPEEDBOOST");
 				break;
 			case GARAGE:
-				basketBO.buyCar(product.getProductId(), personaEntity, false, userEntity);
+				basketBO.buyCar(product.getProductId(), personaEntity, true, userEntity);
 
 				// FIXME get better icon hash, like gift
 				item.setHash(product.getHash());

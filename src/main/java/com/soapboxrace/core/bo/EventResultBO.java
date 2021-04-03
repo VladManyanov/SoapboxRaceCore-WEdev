@@ -15,6 +15,7 @@ import com.soapboxrace.core.bo.util.CarClassType;
 import com.soapboxrace.core.dao.CarClassesDAO;
 import com.soapboxrace.core.dao.EventDataDAO;
 import com.soapboxrace.core.dao.LobbyDAO;
+import com.soapboxrace.core.dao.LobbyEntrantDAO;
 import com.soapboxrace.core.jpa.CarClassesEntity;
 import com.soapboxrace.core.jpa.CarSlotEntity;
 import com.soapboxrace.core.jpa.CustomCarEntity;
@@ -74,6 +75,9 @@ public class EventResultBO {
 	
 	@EJB
 	private LobbyCountdownBO lobbyCountdownBO;
+	
+	@EJB
+	private LobbyEntrantDAO lobbyEntrantDAO;
 
 	@Resource
     private TimerService timerService;
@@ -257,6 +261,7 @@ public class EventResultBO {
 				oldLobbyEntity.setStarted(false); // Unlock our lobby for players
 				oldLobbyEntity.setLobbyDateTimeStart(new Date());
 				lobbyCountdownBO.scheduleLobbyStart(oldLobbyEntity);
+				lobbyEntrantDAO.deleteByLobby(oldLobbyEntity);
 				lobbyDAO.update(oldLobbyEntity);
 			}
 			

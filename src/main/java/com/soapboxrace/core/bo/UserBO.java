@@ -179,6 +179,7 @@ public class UserBO {
 		UserEntity userEntitySender = personaEntity.getUser();
 		int personaMoneySender = personaEntity.getCash();
 		int moneyGivenAlready = userEntitySender.getMoneyGiven();
+		boolean isStaff = userEntitySender.isAdmin();
 		int levelCap = parameterBO.getIntParam("SENDMONEY_LEVELCAP");
         
 		boolean premiumStatusSender = userEntitySender.isPremium();
@@ -189,7 +190,7 @@ public class UserBO {
 		if (premiumStatusSender) {
 			sendLimit = parameterBO.getIntParam("MAX_SENDMONEY_PREMIUM");
 		}
-		if (moneyGivenAlready >= sendLimit) {
+		if (moneyGivenAlready >= sendLimit && !isStaff) {
 			openFireSoapBoxCli.send(XmppChat.createSystemMessage("### Unable to send money - transaction limit is already reached.\n"
 					+ "## Limit resets every Monday."), personaId);
 			return null;
@@ -198,7 +199,7 @@ public class UserBO {
 			openFireSoapBoxCli.send(XmppChat.createSystemMessage("### Value is bigger than your money, check the value and try again."), personaId);
 			return null;
 		}
-		if (entryCash > sendLimit) {
+		if (entryCash > sendLimit && !isStaff) {
 			openFireSoapBoxCli.send(XmppChat.createSystemMessage("### Cannot send more than the limit ($" + sendLimit + " per week."), personaId);
 			return null;
 		}
@@ -230,9 +231,11 @@ public class UserBO {
 			
 			else {
 				// If the money value is greater than available send amount, we change it to the max from that amount
-				int givenMoneyDiff = sendLimit - moneyGivenAlready;
-				if (entryCash > givenMoneyDiff) { 
-					entryCash = givenMoneyDiff;
+				if (!isStaff) {
+					int givenMoneyDiff = sendLimit - moneyGivenAlready;
+					if (entryCash > givenMoneyDiff) { 
+						entryCash = givenMoneyDiff;
+					}
 				}
 				int personaMoneyTargetNew = personaMoneyTarget + entryCash;
 				if (personaMoneyTargetNew > moneyLimit) {
@@ -243,6 +246,9 @@ public class UserBO {
 				personaEntityTarget.setCash(personaMoneyTargetNew);
 				personaEntity.setCash(personaMoneySender - moneyDiff);
 				int moneyGivenFinal = moneyGivenAlready + moneyDiff;
+				if (isStaff) {
+					moneyGivenFinal = 0;
+				}
 				userEntitySender.setMoneyGiven(moneyGivenFinal);
 				int moneyGivenFinal2 = sendLimit - moneyGivenFinal;
 				

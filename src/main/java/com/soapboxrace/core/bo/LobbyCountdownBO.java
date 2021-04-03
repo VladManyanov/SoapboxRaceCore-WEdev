@@ -275,7 +275,6 @@ public class LobbyCountdownBO {
 	public void lockLobby(LobbyEntity lobbyEntity) {
 		lobbyEntity.setStarted(true);
 		lobbyEntity.setLobbyDateTimeStart(null);
-		lobbyEntrantDAO.deleteByLobby(lobbyEntity);
 		lobbyDao.update(lobbyEntity);
 	}
 	
