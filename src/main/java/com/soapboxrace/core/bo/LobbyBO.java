@@ -381,6 +381,7 @@ public class LobbyBO {
 		lobbyInfoType.setLobbyId(lobbyInviteId);
 	
 		teamRacingInit(personaId, lobbyEntity, entrants); // Team Racing actions
+		tokenSessionBO.setSearchEventId(personaId, eventId); // Should keep the eventId for Race Again lobbies
 		
 		return lobbyInfoType;
 	}

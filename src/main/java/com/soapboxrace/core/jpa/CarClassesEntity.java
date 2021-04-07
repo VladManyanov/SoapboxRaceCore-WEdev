@@ -13,7 +13,9 @@ import javax.persistence.Table;
 @Table(name = "CAR_CLASSES")
 @NamedQueries({ 
         @NamedQuery(name = "CarClassesEntity.findByHash", //
-            query = "SELECT obj FROM CarClassesEntity obj WHERE obj.hash = :hash") //
+            query = "SELECT obj FROM CarClassesEntity obj WHERE obj.hash = :hash"), //
+        @NamedQuery(name = "CarClassesEntity.findByProductId", //
+        	 query = "SELECT obj FROM CarClassesEntity obj WHERE obj.productId = :productId") //
 })
 public class CarClassesEntity implements Serializable {
 	private static final long serialVersionUID = 1L;

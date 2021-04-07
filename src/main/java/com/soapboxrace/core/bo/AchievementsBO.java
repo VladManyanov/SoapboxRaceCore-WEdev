@@ -30,6 +30,7 @@ import com.soapboxrace.core.dao.AchievementStateDAO;
 import com.soapboxrace.core.dao.BadgeDefinitionDAO;
 import com.soapboxrace.core.dao.BadgePersonaDAO;
 import com.soapboxrace.core.dao.BasketDefinitionDAO;
+import com.soapboxrace.core.dao.CarClassesDAO;
 import com.soapboxrace.core.dao.CarSlotDAO;
 import com.soapboxrace.core.dao.EventSessionDAO;
 import com.soapboxrace.core.dao.LobbyDAO;
@@ -37,6 +38,8 @@ import com.soapboxrace.core.dao.PersonaDAO;
 import com.soapboxrace.core.dao.RewardDropDAO;
 import com.soapboxrace.core.dao.TokenSessionDAO;
 import com.soapboxrace.core.dao.UserDAO;
+import com.soapboxrace.core.engine.EngineException;
+import com.soapboxrace.core.engine.EngineExceptionCode;
 import com.soapboxrace.core.jpa.AchievementBrandsEntity;
 import com.soapboxrace.core.jpa.AchievementDefinitionEntity;
 import com.soapboxrace.core.jpa.AchievementPersonaEntity;
@@ -44,6 +47,7 @@ import com.soapboxrace.core.jpa.AchievementRankEntity;
 import com.soapboxrace.core.jpa.AchievementStateEntity;
 import com.soapboxrace.core.jpa.BadgeDefinitionEntity;
 import com.soapboxrace.core.jpa.BadgePersonaEntity;
+import com.soapboxrace.core.jpa.CarClassesEntity;
 import com.soapboxrace.core.jpa.EventDataEntity;
 import com.soapboxrace.core.jpa.EventSessionEntity;
 import com.soapboxrace.core.jpa.PersonaEntity;
@@ -142,6 +146,9 @@ public class AchievementsBO {
 	
 	@EJB
 	private BasketBO basketBO;
+	
+	@EJB
+	private CarClassesDAO carClassesDAO;
 	
 	@EJB
 	private StringListConverter stringListConverter;
@@ -722,11 +729,13 @@ public class AchievementsBO {
 				item.setTitle(boostFormat + " SPEEDBOOST");
 				break;
 			case GARAGE:
+				CarClassesEntity carClassesEntity = carClassesDAO.findByProductId(product.getProductId());
+				if (carClassesEntity == null) { // That Product ID is not referenced on Car Classes table
+					throw new EngineException(EngineExceptionCode.CarDataInvalid, false);
+				}
 				basketBO.buyCar(product.getProductId(), personaEntity, true, userEntity);
-
-				// FIXME get better icon hash, like gift
 				item.setHash(product.getHash());
-				item.setTitle(achievementRankEntity.getRewardText());
+				item.setTitle(carClassesEntity.getModel());
 				break;
 			case INVENTORY:
 				String productTitle = product.getProductTitle();

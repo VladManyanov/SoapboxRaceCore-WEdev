@@ -49,17 +49,19 @@ public class RewardDropDAO extends BaseDAO<RewardDropEntity> {
 		int number = count.intValue();
 		Random random = new Random();
 		rewardDropQuery.setMaxResults(1);
-		if (isCardPack) {
+		if (isCardPack) { // Card Pack gives you a random set of items
 			int max = Math.max(1, numberOfRewards);
 			for (int i = 0; i < max; i++) {
 				number = random.nextInt(count.intValue());
 				rewardDropQuery.setFirstResult(number);
 				rewardDropList.add(rewardDropQuery.getSingleResult());
 			}
-		} else {
-			number = random.nextInt(count.intValue());
-			rewardDropQuery.setFirstResult(number);
-			rewardDropList.add(rewardDropQuery.getSingleResult());
+		} else { // Give the defined items
+			int max = Math.max(1, numberOfRewards);
+			for (int i = 0; i < max; i++) {
+				rewardDropQuery.setFirstResult(i);
+				rewardDropList.add(rewardDropQuery.getSingleResult());
+			}
 		}
 		return rewardDropList;
 	}

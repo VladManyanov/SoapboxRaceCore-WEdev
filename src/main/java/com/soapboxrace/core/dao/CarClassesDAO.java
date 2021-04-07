@@ -21,14 +21,20 @@ public class CarClassesDAO extends BaseDAO<CarClassesEntity> {
 		this.entityManager = entityManager;
 	}
 
-	public CarClassesEntity findById(String productId) {
-		return entityManager.find(CarClassesEntity.class, productId);
+	public CarClassesEntity findById(String id) {
+		return entityManager.find(CarClassesEntity.class, id);
 	}
 
 	public CarClassesEntity findByHash(int hash) {
 		entityManager.setFlushMode(FlushModeType.COMMIT);
 		TypedQuery<CarClassesEntity> query = entityManager.createNamedQuery("CarClassesEntity.findByHash", CarClassesEntity.class);
 		query.setParameter("hash", hash);
+		return query.getSingleResult();
+	}
+	
+	public CarClassesEntity findByProductId(String productId) {
+		TypedQuery<CarClassesEntity> query = entityManager.createNamedQuery("CarClassesEntity.findByProductId", CarClassesEntity.class);
+		query.setParameter("productId", productId);
 		return query.getSingleResult();
 	}
 	

@@ -260,6 +260,8 @@ public class EventResultBO {
 			if (oldLobbyEntity.isStarted()) {
 				oldLobbyEntity.setStarted(false); // Unlock our lobby for players
 				oldLobbyEntity.setLobbyDateTimeStart(new Date());
+				oldLobbyEntity.setTeam1Id(null);
+				oldLobbyEntity.setTeam2Id(null);
 				lobbyCountdownBO.scheduleLobbyStart(oldLobbyEntity);
 				lobbyEntrantDAO.deleteByLobby(oldLobbyEntity);
 				lobbyDAO.update(oldLobbyEntity);
