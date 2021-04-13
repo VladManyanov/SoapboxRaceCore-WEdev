@@ -122,7 +122,6 @@ public class PromoCodeBO {
 		int premiumMoneyValue = 0;
 		int playerInitialCash = personaEntity.getCash();
 		int finalValue = 0;
-		int cashPreValue = 0;
 		int playerInitialLevel = personaEntity.getLevel();
 		Long personaId = personaEntity.getPersonaId();
 		int maxLevelCap = parameterBO.getIntParam("MAX_LEVEL");
@@ -131,9 +130,8 @@ public class PromoCodeBO {
 		switch (premiumCodeType) {
 		    case "powerup":
 		    	if (!userEntity.isPremium()) {
-		    		premiumAchievementApply(126, personaEntity);
+		    		premiumAchievementApply(126, personaEntity, false);
 		    	
-		    		cashPreValue = personaEntity.getCash();
 		    		premiumMoneyValue = 5000000;
 		    		finalValue = playerInitialCash + premiumMoneyValue;
 		    		finalValue = commerceBO.limitBoostConversion(finalValue, maxCashLimit, sbConvCashValue, sbConvAmount, userEntity, personaId, false);
@@ -152,13 +150,14 @@ public class PromoCodeBO {
 		    		promoCodeEntity.setIsUsed(true);
 					promoCodeEntity.setUser(userEntity);
 					promoCodeDao.update(promoCodeEntity);
-					System.out.println("Player " + nickname + " got the Promo Code (Money amount BEFORE: " + cashPreValue + ")");
+					System.out.println("Player " + nickname + " got the Promo Code "
+							+ "(Type: " + premiumCodeType + ", Money amount BEFORE: " + playerInitialCash + ", level BEFORE: " + playerInitialLevel + ")");
 					return "Power-Up is activated (restart the game).";
 		    	}
 		    	return "ERROR: this account is already got a higher Premium";
 		    case "base":
-		    	premiumAchievementApply(126, personaEntity);
-		    	premiumAchievementApply(501, personaEntity);
+		    	premiumAchievementApply(126, personaEntity, false);
+		    	premiumAchievementApply(501, personaEntity, false);
 		    	premiumCarSlots(200, userEntity);
 		    	
 		    	userEntity.setPremium(true);
@@ -169,15 +168,15 @@ public class PromoCodeBO {
 				promoCodeEntity.setIsUsed(true);
 				promoCodeEntity.setUser(userEntity);
 				promoCodeDao.update(promoCodeEntity);
-				System.out.println("Player " + nickname + " got the Promo Code.");
+				System.out.println("Player " + nickname + " got the Promo Code "
+						+ "(Type: " + premiumCodeType + ", Money amount BEFORE: " + playerInitialCash + ", level BEFORE: " + playerInitialLevel + ")");
 				return "Premium Base is activated (restart the game).";
 		    case "plus":
-		    	premiumAchievementApply(126, personaEntity);
-		    	premiumAchievementApply(501, personaEntity);
-		    	premiumAchievementApply(502, personaEntity);
+		    	premiumAchievementApply(126, personaEntity, false);
+		    	premiumAchievementApply(501, personaEntity, false);
+		    	premiumAchievementApply(502, personaEntity, false);
 		    	premiumCarSlots(200, userEntity);
 		    	
-		    	cashPreValue = personaEntity.getCash();
 		    	premiumMoneyValue = 10000000;
 	    		finalValue = playerInitialCash + premiumMoneyValue;
 	    		finalValue = commerceBO.limitBoostConversion(finalValue, maxCashLimit, sbConvCashValue, sbConvAmount, userEntity, personaId, false);
@@ -199,16 +198,16 @@ public class PromoCodeBO {
 		    	promoCodeEntity.setIsUsed(true);
 				promoCodeEntity.setUser(userEntity);
 				promoCodeDao.update(promoCodeEntity);
-				System.out.println("Player " + nickname + " got the Promo Code (Money amount BEFORE: " + cashPreValue + ")");
+				System.out.println("Player " + nickname + " got the Promo Code "
+						+ "(Type: " + premiumCodeType + ", Money amount BEFORE: " + playerInitialCash + ", level BEFORE: " + playerInitialLevel + ")");
 				return "Premium+ is activated (restart the game).";
 		    case "full":
-		    	premiumAchievementApply(126, personaEntity);
-		    	premiumAchievementApply(501, personaEntity);
-		    	premiumAchievementApply(502, personaEntity);
-		    	premiumAchievementApply(503, personaEntity);
+		    	premiumAchievementApply(126, personaEntity, false);
+		    	premiumAchievementApply(501, personaEntity, false);
+		    	premiumAchievementApply(502, personaEntity, false);
+		    	premiumAchievementApply(503, personaEntity, true);
 		    	premiumCarSlots(200, userEntity);
 		    	
-		    	cashPreValue = personaEntity.getCash();
 		    	premiumMoneyValue = 30000000;
 	    		finalValue = playerInitialCash + premiumMoneyValue;
 	    		finalValue = commerceBO.limitBoostConversion(finalValue, maxCashLimit, sbConvCashValue, sbConvAmount, userEntity, personaId, false);
@@ -230,10 +229,10 @@ public class PromoCodeBO {
 		    	promoCodeEntity.setIsUsed(true);
 				promoCodeEntity.setUser(userEntity);
 				promoCodeDao.update(promoCodeEntity);
-				System.out.println("Player " + nickname + " got the Promo Code (Money amount BEFORE: " + cashPreValue + ")");
+				System.out.println("Player " + nickname + " got the Promo Code "
+						+ "(Type: " + premiumCodeType + ", Money amount BEFORE: " + playerInitialCash + ", level BEFORE: " + playerInitialLevel + ")");
 				return "Premium Full is activated (restart the game).";
 		    case "moneydrop":
-		    	cashPreValue = personaEntity.getCash();
 		    	premiumMoneyValue = 10000000;
 		    	finalValue = playerInitialCash + premiumMoneyValue;
 		    	finalValue = commerceBO.limitBoostConversion(finalValue, maxCashLimit, sbConvCashValue, sbConvAmount, userEntity, personaId, false);
@@ -244,10 +243,10 @@ public class PromoCodeBO {
 		    	promoCodeEntity.setIsUsed(true);
 				promoCodeEntity.setUser(userEntity);
 				promoCodeDao.update(promoCodeEntity);
-				System.out.println("Player " + nickname + " got the Promo Code (Money amount BEFORE: " + cashPreValue + ")");
+				System.out.println("Player " + nickname + " got the Promo Code "
+						+ "(Type: " + premiumCodeType + ", Money amount BEFORE: " + playerInitialCash + ", level BEFORE: " + playerInitialLevel + ")");
 				return "Money Drop is activated (restart the game).";
 		    case "moneydropx10":
-		    	cashPreValue = personaEntity.getCash();
 		    	premiumMoneyValue = 100000000;
 		    	finalValue = playerInitialCash + premiumMoneyValue;
 		    	finalValue = commerceBO.limitBoostConversion(finalValue, maxCashLimit, sbConvCashValue, sbConvAmount, userEntity, personaId, false);
@@ -257,7 +256,8 @@ public class PromoCodeBO {
 		    	promoCodeEntity.setIsUsed(true);
 				promoCodeEntity.setUser(userEntity);
 				promoCodeDao.update(promoCodeEntity);
-				System.out.println("Player " + nickname + " got the Promo Code (Money amount BEFORE: " + cashPreValue + ")");
+				System.out.println("Player " + nickname + " got the Promo Code "
+						+ "(Type: " + premiumCodeType + ", Money amount BEFORE: " + playerInitialCash + ", level BEFORE: " + playerInitialLevel + ")");
 				return "Money Drop is activated (restart the game).";
 		    case "garage50":
 		    	premiumCarSlots(250, userEntity);
@@ -265,7 +265,8 @@ public class PromoCodeBO {
 		    	promoCodeEntity.setIsUsed(true);
 				promoCodeEntity.setUser(userEntity);
 				promoCodeDao.update(promoCodeEntity);
-				System.out.println("Player " + nickname + " got the Promo Code.");
+				System.out.println("Player " + nickname + " got the Promo Code "
+						+ "(Type: " + premiumCodeType + ", Money amount BEFORE: " + playerInitialCash + ", level BEFORE: " + playerInitialLevel + ")");
 				return "Garage50+ is activated (restart the game).";
 		    case "garage150":
 		    	premiumCarSlots(350, userEntity);
@@ -273,7 +274,8 @@ public class PromoCodeBO {
 		    	promoCodeEntity.setIsUsed(true);
 				promoCodeEntity.setUser(userEntity);
 				promoCodeDao.update(promoCodeEntity);
-				System.out.println("Player " + nickname + " got the Promo Code.");
+				System.out.println("Player " + nickname + " got the Promo Code "
+						+ "(Type: " + premiumCodeType + ", Money amount BEFORE: " + playerInitialCash + ", level BEFORE: " + playerInitialLevel + ")");
 				return "Garage150+ is activated (restart the game).";
 		    case "levelup":
 		    	int newLevel = playerInitialLevel + 25;
@@ -293,7 +295,8 @@ public class PromoCodeBO {
 		    	promoCodeEntity.setIsUsed(true);
 				promoCodeEntity.setUser(userEntity);
 				promoCodeDao.update(promoCodeEntity);
-				System.out.println("Player " + nickname + " got the Promo Code.");
+				System.out.println("Player " + nickname + " got the Promo Code "
+						+ "(Type: " + premiumCodeType + ", Money amount BEFORE: " + playerInitialCash + ", level BEFORE: " + playerInitialLevel + ")");
 				String finalOutput = "Level-Up is activated (restart the game).";
 				if (cashDiff > 0) {
 					finalOutput = finalOutput.concat("Unused levels has been converted to IGC - " + cashDiff + ".");
@@ -319,13 +322,13 @@ public class PromoCodeBO {
 		int timeDayConvert = Integer.parseInt(timeDay);
 		switch (premiumType) {
 		    case "powerup":
-		    	premiumAchievementApply(126, personaEntity);
+		    	premiumAchievementApply(126, personaEntity, false);
 		    	userEntity.setExtraMoney(extraMoneyConvert);
 		    	userDao.update(userEntity);
 				return nickname + " - DONE";
 		    case "base":
-		    	premiumAchievementApply(126, personaEntity);
-		    	premiumAchievementApply(501, personaEntity);
+		    	premiumAchievementApply(126, personaEntity, false);
+		    	premiumAchievementApply(501, personaEntity, false);
 		    	userEntity.setExtraMoney(extraMoneyConvert);
 		    	userEntity.setPremium(true);
 		    	userEntity.setPremiumType(premiumType);
@@ -333,9 +336,9 @@ public class PromoCodeBO {
 		    	userDao.update(userEntity);
 				return nickname + " - DONE";
 		    case "plus":
-		    	premiumAchievementApply(126, personaEntity);
-		    	premiumAchievementApply(501, personaEntity);
-		    	premiumAchievementApply(502, personaEntity);
+		    	premiumAchievementApply(126, personaEntity, false);
+		    	premiumAchievementApply(501, personaEntity, false);
+		    	premiumAchievementApply(502, personaEntity, false);
 		    	userEntity.setExtraMoney(extraMoneyConvert);
 		    	userEntity.setPremium(true);
 		    	userEntity.setPremiumType(premiumType);
@@ -343,10 +346,10 @@ public class PromoCodeBO {
 		    	userDao.update(userEntity);
 				return nickname + " - DONE";
 		    case "full":
-		    	premiumAchievementApply(126, personaEntity);
-		    	premiumAchievementApply(501, personaEntity);
-		    	premiumAchievementApply(502, personaEntity);
-		    	premiumAchievementApply(503, personaEntity);
+		    	premiumAchievementApply(126, personaEntity, false);
+		    	premiumAchievementApply(501, personaEntity, false);
+		    	premiumAchievementApply(502, personaEntity, false);
+		    	premiumAchievementApply(503, personaEntity, true);
 		    	userEntity.setExtraMoney(extraMoneyConvert);
 		    	userEntity.setPremium(true);
 		    	userEntity.setPremiumType(premiumType);
@@ -354,11 +357,11 @@ public class PromoCodeBO {
 		    	userDao.update(userEntity);
 				return nickname + " - DONE";
 		    case "unlim":
-		    	premiumAchievementApply(126, personaEntity);
-		    	premiumAchievementApply(501, personaEntity);
-		    	premiumAchievementApply(502, personaEntity);
-		    	premiumAchievementApply(503, personaEntity);
-		    	premiumAchievementApply(504, personaEntity);
+		    	premiumAchievementApply(126, personaEntity, false);
+		    	premiumAchievementApply(501, personaEntity, false);
+		    	premiumAchievementApply(502, personaEntity, false);
+		    	premiumAchievementApply(503, personaEntity, true);
+		    	premiumAchievementApply(504, personaEntity, true);
 		    	userEntity.setExtraMoney(extraMoneyConvert);
 		    	userEntity.setPremium(true);
 		    	userEntity.setPremiumType(premiumType);
@@ -370,13 +373,18 @@ public class PromoCodeBO {
 		}
 	}
 	
-	private void premiumAchievementApply (int rankId, PersonaEntity personaEntity) {
+	private void premiumAchievementApply (int rankId, PersonaEntity personaEntity, boolean giveReward) {
 		AchievementRankEntity achievementRankEntity = achievementRankDao.findById((long) rankId);
 		if (achievementStateDao.findByPersonaAchievementRank(personaEntity, achievementRankEntity) == null) {
 			AchievementStateEntity achievementStateEntity = new AchievementStateEntity();
 			achievementStateEntity.setAchievedOn(LocalDateTime.now());
 			achievementStateEntity.setAchievementRank(achievementRankEntity);
-			achievementStateEntity.setAchievementState(AchievementState.COMPLETED);
+			if (giveReward) {
+				achievementStateEntity.setAchievementState(AchievementState.REWARD_WAITING);
+			}
+			else {
+				achievementStateEntity.setAchievementState(AchievementState.COMPLETED);
+			}
 			achievementStateEntity.setPersona(personaEntity);
 			achievementStateDao.insert(achievementStateEntity);
 		}

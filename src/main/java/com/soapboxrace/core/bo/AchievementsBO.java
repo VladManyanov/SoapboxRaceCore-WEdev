@@ -729,13 +729,18 @@ public class AchievementsBO {
 				item.setTitle(boostFormat + " SPEEDBOOST");
 				break;
 			case GARAGE:
-				CarClassesEntity carClassesEntity = carClassesDAO.findByProductId(product.getProductId());
-				if (carClassesEntity == null) { // That Product ID is not referenced on Car Classes table
-					throw new EngineException(EngineExceptionCode.CarDataInvalid, false);
+				if (rewardDrops.size() > 1) {
+					CarClassesEntity carClassesEntity = carClassesDAO.findByProductId(product.getProductId());
+					if (carClassesEntity == null) { // That Product ID is not referenced on Car Classes table
+						throw new EngineException(EngineExceptionCode.CarDataInvalid, false);
+					}
+					item.setTitle(carClassesEntity.getModel());
 				}
-				basketBO.buyCar(product.getProductId(), personaEntity, true, userEntity);
+				else {
+					item.setTitle(achievementRankEntity.getRewardText());
+				}
 				item.setHash(product.getHash());
-				item.setTitle(carClassesEntity.getModel());
+				basketBO.buyCar(product.getProductId(), personaEntity, true, userEntity);
 				break;
 			case INVENTORY:
 				String productTitle = product.getProductTitle();
