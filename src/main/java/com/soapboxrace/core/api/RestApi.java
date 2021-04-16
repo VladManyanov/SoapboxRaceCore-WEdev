@@ -293,4 +293,17 @@ public class RestApi {
 		if (obj.isOk()) return Response.ok(obj).build();
 		return Response.serverError().entity(obj).build();
 	}
+	/**
+	 * Удалить рекорд
+	 */
+	@GET
+	@Path("DeleteRecord")
+	@Produces(MediaType.APPLICATION_XML)
+	public Response deleteRecord(@NotNull @QueryParam("id") Long id, @QueryParam("reason") String reason, @QueryParam("token") String token) {
+		if (!apiTokenDAO.verifyToken(token, sr.getRemoteAddr())) {
+			String accessDenied = parameterBO.getStrParam("RESTAPI_FAILURELINK");
+			return Response.temporaryRedirect(URI.create(accessDenied)).build();
+		}
+		return Response.ok(bo.deleteRecord(id, reason)).build();
+	}
 }

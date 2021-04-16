@@ -22,7 +22,8 @@ import javax.persistence.Table;
 		@NamedQuery(name = "EventEntity.findTESearchEnabled", query = "SELECT obj FROM EventEntity obj WHERE (rotation = :rotation OR rotation = 0) AND obj.searchAvailable = true AND isEnabled = true AND (obj.eventModeId = 24 or obj.eventModeId = 100) AND (obj.carClassHash = 607077938 or obj.carClassHash = :carClassHash)"), //
 		
 		@NamedQuery(name = "EventEntity.findByLevel", query = "SELECT obj FROM EventEntity obj WHERE :level >= obj.minLevel AND :level <= obj.maxLevel AND isEnabled = true"), //
-		@NamedQuery(name = "EventEntity.findByRotation", query = "SELECT obj FROM EventEntity obj WHERE :level >= obj.minLevel AND :level <= obj.maxLevel AND isEnabled = true AND (rotation = :rotation OR rotation = 0)") //
+		@NamedQuery(name = "EventEntity.findByRotation", query = "SELECT obj FROM EventEntity obj WHERE :level >= obj.minLevel AND :level <= obj.maxLevel AND isEnabled = true AND (rotation = :rotation OR rotation = 0)"), //
+		@NamedQuery(name = "EventEntity.findByRotationBase", query = "SELECT obj FROM EventEntity obj WHERE :level >= obj.minLevel AND :level <= obj.maxLevel AND isEnabled = true AND cSeries = false AND (rotation = :rotation OR rotation = 0)") //
 })
 public class EventEntity {
 
@@ -79,6 +80,7 @@ public class EventEntity {
 	private long timeLimit;
 	private int baseEvent;
 	private int trainingId;
+	private boolean cSeries; // Daily Series event
 
 	public int getId() {
 		return id;
@@ -478,5 +480,13 @@ public class EventEntity {
 
 	public void setTrainingId(int trainingId) {
 		this.trainingId = trainingId;
+	}
+	
+	public boolean getIsCSeries() {
+		return cSeries;
+	}
+
+	public void setCSeries(boolean cSeries) {
+		this.cSeries = cSeries;
 	}
 }

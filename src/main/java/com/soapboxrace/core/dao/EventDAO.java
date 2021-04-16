@@ -28,6 +28,12 @@ public class EventDAO extends BaseDAO<EventEntity> {
 	public EventEntity findById(int id) {
 		return entityManager.find(EventEntity.class, id);
 	}
+	
+	public EventEntity findByIdDetached(int id) {
+		EventEntity event = entityManager.find(EventEntity.class, id);
+		entityManager.detach(event);
+		return event;
+	}
 
 	public List<EventEntity> findAllStats() {
 		TypedQuery<EventEntity> query = entityManager.createNamedQuery("EventEntity.findAllStats", EventEntity.class);
@@ -114,6 +120,13 @@ public class EventDAO extends BaseDAO<EventEntity> {
 	
 	public List<EventEntity> findByRotation(int level) {
 		TypedQuery<EventEntity> query = entityManager.createNamedQuery("EventEntity.findByRotation", EventEntity.class);
+		query.setParameter("level", level);
+		query.setParameter("rotation", parameterBO.getIntParam("ROTATIONID"));
+		return query.getResultList();
+	}
+	
+	public List<EventEntity> findByRotationBase(int level) {
+		TypedQuery<EventEntity> query = entityManager.createNamedQuery("EventEntity.findByRotationBase", EventEntity.class);
 		query.setParameter("level", level);
 		query.setParameter("rotation", parameterBO.getIntParam("ROTATIONID"));
 		return query.getResultList();

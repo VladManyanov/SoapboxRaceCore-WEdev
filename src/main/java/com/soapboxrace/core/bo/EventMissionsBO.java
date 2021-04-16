@@ -1,7 +1,6 @@
 package com.soapboxrace.core.bo;
 
 import java.time.LocalDate;
-import java.util.stream.Stream;
 
 import javax.ejb.EJB;
 import javax.ejb.Schedule;
@@ -44,11 +43,19 @@ public class EventMissionsBO {
 	private ParameterBO parameterBO;
 	
 	@EJB
+	private EventBO eventBO;
+	
+	@EJB
+	private TokenSessionBO tokenSessionBO;
+	
+	@EJB
 	private TimeReadConverter timeReadConverter;
 
 	public void getEventMissionInfo(EventEntity eventEntity, Long activePersonaId) {
 		EventMissionsEntity eventMissionsEntity = eventMissionsDAO.getEventMission(eventEntity);
-		LocalDate dailyRaceDate = personaDao.findById(activePersonaId).getDailyRaceDate();
+		PersonaEntity personaEntity = personaDao.findById(activePersonaId);
+		boolean seqCSeries = personaEntity.getUser().getIsSeqDailySeries();
+		LocalDate dailyRaceDate = personaEntity.getDailyRaceDate();
 		if (eventMissionsEntity != null) {
 			String eventType = eventMissionsEntity.getEventType();
 			String msgTarget = "!!!";
@@ -77,7 +84,7 @@ public class EventMissionsBO {
 			}
 			achievementsBO.broadcastUICustom(activePersonaId, message, msgMode, 5);
 			// Daily Race's reward can be given only once per day
-			if (dailyRaceDate != null && dailyRaceDate.equals(curDate)) { 
+			if (!seqCSeries && dailyRaceDate != null && dailyRaceDate.equals(curDate)) { 
 				String messageNoReward = "TXT_WEV3_BASEANNOUNCER_MISSION_REPLAY";
 				achievementsBO.broadcastUICustom(activePersonaId, messageNoReward, "MISSIONMODE", 3);
 			}
@@ -87,6 +94,7 @@ public class EventMissionsBO {
 	public boolean getEventMissionAccolades(EventEntity eventEntity, EventMissionsEntity eventMissionsEntity, Long activePersonaId,
 			ArbitrationPacket arbitrationPacket, int finishReason) {
 		PersonaEntity personaEntity = personaDao.findById(activePersonaId);
+		boolean seqCSeries = personaEntity.getUser().getIsSeqDailySeries();
 		LocalDate dailyRaceDate = personaEntity.getDailyRaceDate();
 		String eventType = eventMissionsEntity.getEventType();
 		String message = "TXT_WEV3_BASEANNOUNCER_MISSIONRESULT_FAIL";
@@ -131,13 +139,25 @@ public class EventMissionsBO {
 			}
 			break;
 		}
-		if (isDone && (dailyRaceDate == null || !dailyRaceDate.equals(curDate))) {
+		if (isDone && (seqCSeries || dailyRaceDate == null || !dailyRaceDate.equals(curDate))) {
 			personaEntity.setDailyRaceDate(curDate);
+			if (seqCSeries) { // Sequential mode
+				int seqCSCurrentEvent = personaEntity.getSeqCSCurrentEvent();
+				int[] dailySeriesIntArray = eventBO.getDailySeriesArray();
+				if (seqCSCurrentEvent < (dailySeriesIntArray.length - 1)) {
+					personaEntity.setSeqCSCurrentEvent(seqCSCurrentEvent + 1);
+				}
+				else {
+					personaEntity.setSeqCSCurrentEvent(0); // Reset the Daily Series sequence
+				}
+			}
 			personaDao.update(personaEntity);
 			achievementsBO.applyDailySeries(personaEntity, eventEntity.getId());
 		}
 		else {
-			isDone = false; // No Rewards, since it's a replay
+			if (!seqCSeries) {
+				isDone = false; // No Rewards, since it's a replay
+			}
 		}
 		achievementsBO.broadcastUICustom(activePersonaId, message, msgType, 5);
 		return isDone;
@@ -149,20 +169,17 @@ public class EventMissionsBO {
 	public String dailySeriesRotation() {
 		if (parameterBO.getBoolParam("DAILYSERIES_ROTATION")) {
 			ParameterEntity parameterEntity = parameterDAO.findById("DAILYSERIES_CURRENTID");
-			String dailySeriesStr = parameterBO.getStrParam("DAILYSERIES_SCHEDULE");
-			if (dailySeriesStr == null) {
+			int[] dailySeriesIntArray = eventBO.getDailySeriesArray();
+			if (dailySeriesIntArray == null) {
 				System.out.println("### DailySeriesRotation is not defined!");
 				return "";
 			}
-			String[] dailySeriesArray = dailySeriesStr.split(",");
-			if (dailySeriesArray.length < 2) {
+			if (dailySeriesIntArray.length < 2) {
 				System.out.println("### DailySeriesRotation should contain 2 events or more.");
 				return "";
 			}
-			int[] dailySeriesIntArray = Stream.of(dailySeriesArray).mapToInt(Integer::parseInt).toArray();
 			int currentArrayId = Integer.parseInt(parameterEntity.getValue());
 			int currentEventId = dailySeriesIntArray[currentArrayId];
-				
 			updateEventStatus(currentEventId, false); // Disable previous event
 			
 			currentArrayId++;
@@ -170,7 +187,6 @@ public class EventMissionsBO {
 			currentEventId = dailySeriesIntArray[currentArrayId];
 			
 			updateEventStatus(currentEventId, true); // Enable new event
-			
 			parameterEntity.setValue(String.valueOf(currentArrayId));
 			parameterDAO.update(parameterEntity);
 		}

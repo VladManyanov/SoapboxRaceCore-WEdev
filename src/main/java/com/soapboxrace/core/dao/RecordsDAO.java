@@ -23,6 +23,10 @@ public class RecordsDAO extends BaseDAO<RecordsEntity> {
 	protected void setEntityManager(EntityManager entityManager) {
 		this.entityManager = entityManager;
 	}
+	
+	public RecordsEntity findById(Long id) {
+		return entityManager.find(RecordsEntity.class, id);
+	}
 
 	// Search for the existing player record during event finish
 	public RecordsEntity findCurrentRace(EventEntity event, UserEntity user, boolean powerUps, int carClassHash) {

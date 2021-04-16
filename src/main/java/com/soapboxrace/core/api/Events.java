@@ -63,10 +63,10 @@ public class Events {
 	@Produces(MediaType.APPLICATION_XML)
 	public EventsPacket availableAtLevel(@HeaderParam("securityToken") String securityToken) {
 		Long activePersonaId = tokenSessionBO.getActivePersonaId(securityToken);
+		boolean seqCSeries = tokenSessionBO.getUser(securityToken).getIsSeqDailySeries();
 		personaPresenceDAO.updateCurrentEventPost(activePersonaId, null, 0, null, false);
 		matchmakingBO.resetIgnoredEvents(activePersonaId);
-		tokenSessionBO.setSearchEventId(activePersonaId, 0);
-		tokenSessionBO.setMapHostedEvent(activePersonaId, false);
+		tokenSessionBO.resetRaceNow(securityToken);
 		OwnedCarTrans defaultCar = personaBO.getDefaultCar(activePersonaId);
 		CustomCarTrans customCarTrans = defaultCar.getCustomCar();
 		int carClassHash = customCarTrans.getCarClassHash();
@@ -79,8 +79,8 @@ public class Events {
 
 		EventsPacket eventsPacket = new EventsPacket();
 		ArrayOfEventDefinition arrayOfEventDefinition = new ArrayOfEventDefinition();
-		List<EventEntity> availableAtLevel = eventBO.availableAtLevel(activePersonaId);
-		for (EventEntity eventEntity : availableAtLevel) {
+		List<EventEntity> availableEvents = eventBO.getAvailableEvents(activePersonaId, seqCSeries);
+		for (EventEntity eventEntity : availableEvents) {
 			String carModel = eventEntity.getCarModel();
 			int eventClassHash = eventEntity.getCarClassHash();
 			boolean isLockedAlready = false;

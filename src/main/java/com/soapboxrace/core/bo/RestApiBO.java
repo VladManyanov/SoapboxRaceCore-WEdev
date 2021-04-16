@@ -9,8 +9,11 @@ import java.util.List;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
+import javax.ws.rs.core.Response;
 
+import com.soapboxrace.core.bo.util.DiscordWebhook;
 import com.soapboxrace.core.bo.util.StringListConverter;
+import com.soapboxrace.core.bo.util.TimeReadConverter;
 import com.soapboxrace.core.dao.APITokenDAO;
 import com.soapboxrace.core.dao.BanDAO;
 import com.soapboxrace.core.dao.CarClassesDAO;
@@ -160,12 +163,21 @@ public class RestApiBO {
 	 */
 	@EJB
 	private MatchmakingBO matchmakingBO;
-
+	/**
+	 * Webhook для Discord
+	 */
+	@EJB
+	private DiscordWebhook discordBot;
+	
 	@EJB
 	private APITokenDAO apiTokenDAO;
 	
 	@EJB
 	private ServerInfoDAO serverInfoDAO;
+	
+	@EJB
+	private TimeReadConverter timeReadConverter;
+	
 	
 	
 	// ================= Функции выборки ================
@@ -509,6 +521,24 @@ public class RestApiBO {
 	public ArrayOfMMLobbies getMatchmakingWebStats() {
 		ArrayOfMMLobbies raceNowInfo = matchmakingBO.matchmakingWebStatus();
 		return raceNowInfo;
+	}
+	
+	/**
+	 * Удалить рекорд
+	 */
+	public Response deleteRecord(Long id, String reason) {
+		RecordsEntity recordsEntity = recordsDAO.findById(id);
+		if (recordsEntity == null) {
+			return Response.serverError().build();
+		}
+		String recordTime = timeReadConverter.convertRecord(recordsEntity.getTimeMS());
+		String eventName = recordsEntity.getEvent().getName();
+		String message = ":heavy_minus_sign:"
+        		+ "\n:wastebasket: **|** Рекорд игрока **" + recordsEntity.getPlayerName() + "** (*" + eventName + ", " + recordTime + "*) был удалён из статистики по причине: *" + reason + "*."
+        		+ "\n:wastebasket: **|** Record of player **" + recordsEntity.getPlayerName() + "** (*" + eventName + ", " + recordTime + "*) has been deleted with reason: *" + reason + "*.";
+		discordBot.sendMessage(message);
+		recordsDAO.delete(recordsEntity);
+		return Response.ok().build();
 	}
 	
 	/**

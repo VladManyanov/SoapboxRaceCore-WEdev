@@ -50,6 +50,7 @@ public class PersonaEntity {
 	private boolean ignoreRaces; // Permanent "Ignore the event after being declined on the search" switch
 	private int priorityMMTimeout; // Personal Priority Class Group search timeout
 	private boolean raceAgain; // Permanent "Does the Race Again lobby invite on the finish appears" switch
+	private int seqCSCurrentEvent; // Current Daily Series event (sequential mode only)
 
 	@ManyToOne
 	@JoinColumn(name = "USERID", referencedColumnName = "ID", foreignKey = @ForeignKey(name = "FK_PERSONA_USER"))
@@ -247,6 +248,14 @@ public class PersonaEntity {
 
 	public void setRaceAgain(boolean raceAgain) {
 		this.raceAgain = raceAgain;
+	}
+	
+	public int getSeqCSCurrentEvent() {
+		return seqCSCurrentEvent;
+	}
+
+	public void setSeqCSCurrentEvent(int seqCSCurrentEvent) {
+		this.seqCSCurrentEvent = seqCSCurrentEvent;
 	}
 
 }

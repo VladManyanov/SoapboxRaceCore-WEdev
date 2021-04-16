@@ -4,6 +4,7 @@ import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import javax.ejb.EJB;
 import javax.ejb.Schedule;
@@ -86,9 +87,24 @@ public class EventBO {
 	@EJB
 	private StringListConverter stringListConverter;
 
-	public List<EventEntity> availableAtLevel(Long personaId) {
+	public List<EventEntity> getAvailableEvents(Long personaId, boolean seqCSeries) {
 		PersonaEntity personaEntity = personaDao.findById(personaId);
-		return eventDao.findByRotation(personaEntity.getLevel());
+		if (!seqCSeries) { // Default AvailableAtLevel events list
+			return eventDao.findByRotation(personaEntity.getLevel());
+		}
+		else { // AvailableAtLevel events list without Daily Series events
+			int[] dailySeriesIntArray = getDailySeriesArray();
+			List<EventEntity> availableEvents = eventDao.findByRotationBase(personaEntity.getLevel());
+			EventEntity csEvent = eventDao.findByIdDetached(dailySeriesIntArray[personaEntity.getSeqCSCurrentEvent()]);
+			csEvent.setIsEnabled(true);
+			availableEvents.add(csEvent); // Add the current Daily Series event to the list
+			return availableEvents;
+		}
+	}
+	
+	public int[] getDailySeriesArray() {
+		String dailySeriesStr = parameterBO.getStrParam("DAILYSERIES_SCHEDULE");
+		return Stream.of(dailySeriesStr.split(",")).mapToInt(Integer::parseInt).toArray();
 	}
 
 	public Long createEventDataSession(Long personaId, Long eventSessionId, Long eventTimer) {

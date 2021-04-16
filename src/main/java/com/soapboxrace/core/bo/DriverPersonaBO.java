@@ -113,6 +113,7 @@ public class DriverPersonaBO {
 		personaEntity.setIgnoreRaces(true);
 		personaEntity.setPriorityMMTimeout(parameterBO.getIntParam("RACENOW_PRIORITYTIMER"));
 		personaEntity.setRaceAgain(true);
+		personaEntity.setSeqCSCurrentEvent(0);
 		personaDao.insert(personaEntity);
 
 		inventoryBO.createInventory(personaEntity);

@@ -92,6 +92,9 @@ public class UserEntity {
 	@Column(name = "dBoostAmount")
 	private int dBoostAmount;
 	
+	@Column(name = "seqDailySeries")
+	private boolean seqDailySeries; // Sequential mode for Daily Series
+	
 	public void setId(Long id) {
 		this.id = id;
 	}
@@ -266,6 +269,14 @@ public class UserEntity {
 
 	public void setDBoostAmount(int dBoostAmount) {
 		this.dBoostAmount = dBoostAmount;
+	}
+	
+	public boolean getIsSeqDailySeries() {
+		return seqDailySeries;
+	}
+
+	public void setSeqDailySeries(boolean seqDailySeries) {
+		this.seqDailySeries = seqDailySeries;
 	}
 
 }
