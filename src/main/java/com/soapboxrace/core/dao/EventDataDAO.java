@@ -1,6 +1,7 @@
 package com.soapboxrace.core.dao;
 
 import java.math.BigInteger;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -143,6 +144,17 @@ public class EventDataDAO extends BaseDAO<EventDataEntity> {
 		for (BigInteger objects : list) {
 			count = objects;
 		}
+		return count;
+	}
+	
+	public BigInteger countCEventTrackResults(int eventid, LocalDateTime startTime, int eventModeId) {
+		BigInteger count = new BigInteger("0");
+		Query query = entityManager.createNativeQuery("SELECT Count(*) FROM event_data WHERE issingle = false AND eventmodeid = "+eventModeId
+				+ " AND finishreason = 22 AND arbitration = true AND date > '"+startTime+"' AND eventid = "+eventid);
+		query.setMaxResults(1);
+		@SuppressWarnings("unchecked")
+		List<BigInteger> list = query.getResultList();
+		if (!list.isEmpty()) count = list.get(0);
 		return count;
 	}
 

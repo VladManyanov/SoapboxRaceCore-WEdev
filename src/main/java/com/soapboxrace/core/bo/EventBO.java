@@ -1,5 +1,6 @@
 package com.soapboxrace.core.bo;
 
+import java.time.LocalDateTime;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.List;
@@ -114,6 +115,7 @@ public class EventBO {
 		eventDataEntity.setEventSessionId(eventSessionId);
 		eventDataEntity.setEvent(eventSessionEntity.getEvent());
 		eventDataEntity.setServerEventDuration(eventTimer); // Temp value of the event timer (current system time)
+		eventDataEntity.setDate(LocalDateTime.now());
 		eventDataDao.insert(eventDataEntity);
 		return eventDataEntity.getId();
 	}

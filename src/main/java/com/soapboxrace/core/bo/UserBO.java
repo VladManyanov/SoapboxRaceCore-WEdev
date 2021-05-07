@@ -264,7 +264,7 @@ public class UserBO {
 		        		+ "\n:money_with_wings: **|** Nгрок **" + senderName + "** отправил **$" + (int) moneyDiff + "** игроку **" + targetName + "**."
 		        		+ "\n:money_with_wings: **|** Player **" + senderName + "** has sent **$" + (int) moneyDiff + "** to player **" + targetName + "**.";
 				discordBot.sendMessage(message);
-				System.out.println("Player " + senderName + " has sent $" + (int) moneyDiff + " to player " + targetName + "(Before: " + personaMoneyTarget + 
+				System.out.println("Player " + senderName + " has sent $" + (int) moneyDiff + " to player " + targetName + " (Before: " + personaMoneyTarget + 
 						", after: " + personaMoneyTargetNew + ")");
 			}
 		}

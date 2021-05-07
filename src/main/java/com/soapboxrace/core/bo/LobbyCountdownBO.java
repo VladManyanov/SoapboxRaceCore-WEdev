@@ -3,6 +3,7 @@ package com.soapboxrace.core.bo;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -99,10 +100,22 @@ public class LobbyCountdownBO {
     private TimerService timerService;
 
 	// Using some code parts from SBRW (WU.gg) code branch
-	public void scheduleLobbyStart(LobbyEntity lobbyEntity) {
+	public void scheduleLobbyStart(Long lobbyId) {
 	    TimerConfig timerConfig = new TimerConfig(null, false); // Must be not-persistent
-	    timerConfig.setInfo(lobbyEntity.getId());
-	    timerService.createSingleActionTimer(parameterBO.getIntParam("LOBBY_TIME"), timerConfig);
+	    timerConfig.setInfo(lobbyId);
+	    
+	    Collection<Timer> activeTimers = timerService.getTimers();
+	    if (activeTimers.isEmpty()) { // No lobby timers, create
+	    	timerService.createSingleActionTimer(parameterBO.getIntParam("LOBBY_TIME"), timerConfig);
+	    }
+	    else {
+	    	for (Timer checkTimer : activeTimers) {
+	    		if (checkTimer.getInfo().equals(lobbyId)) {
+	    			break; // Timer already exists, stop
+	    		}
+	    	}
+	    	timerService.createSingleActionTimer(parameterBO.getIntParam("LOBBY_TIME"), timerConfig);
+	    }
 	}
 	
 	@Timeout

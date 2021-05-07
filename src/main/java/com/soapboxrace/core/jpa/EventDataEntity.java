@@ -1,5 +1,7 @@
 package com.soapboxrace.core.jpa;
 
+import java.time.LocalDateTime;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.ForeignKey;
@@ -80,6 +82,7 @@ public class EventDataEntity {
 	protected boolean speedBugChance; // after 2 hours of playing, NFSW's time system can glitch sometimes, giving a possible player advantage
 	// so server will save this value is player was logged for 2 hours and more
 	protected int carVersion;
+	protected LocalDateTime date;
 	
 	public Long getId() {
 		return id;
@@ -357,6 +360,14 @@ public class EventDataEntity {
 
 	public void setCarVersion(int carVersion) {
 		this.carVersion = carVersion;
+	}
+	
+	public LocalDateTime getDate() {
+		return date;
+	}
+
+	public void setDate(LocalDateTime date) {
+		this.date = date;
 	}
 
 }

@@ -60,7 +60,7 @@ public class AchievementDefinitionEntity {
 	}
 
 	public void setVisible(boolean visible) {
-		isVisible = visible;
+		this.isVisible = visible;
 	}
 
 	public String getProgressText() {

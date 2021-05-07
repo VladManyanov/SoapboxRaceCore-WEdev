@@ -46,7 +46,7 @@ public class LobbyDAO extends BaseDAO<LobbyEntity> {
 		//System.out.println("### findAllMPLobbies, query prepare end");
 		query.setParameter("dateTime1", datePast);
 		query.setParameter("dateTime2", dateNow);
-		if (searchStage == 1) {
+		if (searchStage == 1 && carClassHash != CarClassType.MISC.getId()) {
 			query.setParameter("carClassHash", carClassHash); // carClassHash will be requested only when finding class-restricted races
 		}
 		List<LobbyEntity> resultList = query.getResultList();

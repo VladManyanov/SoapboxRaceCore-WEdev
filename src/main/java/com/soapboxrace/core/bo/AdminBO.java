@@ -54,14 +54,14 @@ public class AdminBO {
         String bannedPlayer = personaEntity.getName();
         String adminPlayer = personaEntityAdmin.getName();
         UserEntity userEntity = personaEntity.getUser();
+        BanEntity earlierBanEntity = banDAO.findByUser(userEntity);
 
-        if (personaEntity == null)
+        if (personaEntity == null) 
             return;
 
         switch (commandInfo.action) {
             case BAN:
             case BAN_F:
-            	BanEntity earlierBanEntity = banDAO.findByUser(userEntity);
                 if (earlierBanEntity != null && !earlierBanEntity.getType().contentEquals("CHAT_BAN")) {
                     openFireSoapBoxCli.send(XmppChat.createSystemMessage("### User is already banned."), personaId);
                     break;
@@ -107,6 +107,11 @@ public class AdminBO {
         		discordBot.sendMessage(messageCB);
                 break;
             case UNBAN:
+            	boolean unbanAction = true;
+            	if (earlierBanEntity == null) {
+                    openFireSoapBoxCli.send(XmppChat.createSystemMessage("### User is not banned, checking HW data."), personaId);
+                    unbanAction = false;
+                }
             	banDAO.unbanUser(userEntity);
             	recordsDAO.unbanRecords(userEntity);
             	// User can have a lot of HW entries
@@ -132,11 +137,13 @@ public class AdminBO {
 						hardwareInfoDAO.update(hwEntry);
 					}
 				}
-                openFireSoapBoxCli.send(XmppChat.createSystemMessage("### User is unbanned, HW entries: " + i + "."), personaId);
-                String messageU = ":heavy_minus_sign:"
-                		+ "\n:hammer: **|** Nгрок **" + bannedPlayer + "** был разбанен модератором **" + adminPlayer + "**. С возвращением."
-                		+ "\n:hammer: **|** Player **" + bannedPlayer + "** was unbanned by moderator **" + adminPlayer + "**. Welcome back.";
-        		discordBot.sendMessage(messageU);
+                openFireSoapBoxCli.send(XmppChat.createSystemMessage("### Unban is done, HW entries: " + i + "."), personaId);
+                if (unbanAction) {
+                	String messageU = ":heavy_minus_sign:"
+                    		+ "\n:hammer: **|** Nгрок **" + bannedPlayer + "** был разбанен модератором **" + adminPlayer + "**. С возвращением."
+                    		+ "\n:hammer: **|** Player **" + bannedPlayer + "** was unbanned by moderator **" + adminPlayer + "**. Welcome back.";
+            		discordBot.sendMessage(messageU);
+                }
                 break;
             default:
                 break;

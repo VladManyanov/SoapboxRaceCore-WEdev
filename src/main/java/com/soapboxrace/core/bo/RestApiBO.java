@@ -49,6 +49,7 @@ import com.soapboxrace.core.jpa.UserEntity;
 import com.soapboxrace.jaxb.http.APITokenResponse;
 import com.soapboxrace.jaxb.http.ArrayOfCarClassHash;
 import com.soapboxrace.jaxb.http.ArrayOfCarNameTop;
+import com.soapboxrace.jaxb.http.ArrayOfCommunityEventInfo;
 import com.soapboxrace.jaxb.http.ArrayOfEvents;
 import com.soapboxrace.jaxb.http.ArrayOfMMLobbies;
 import com.soapboxrace.jaxb.http.ArrayOfPersonaBase;
@@ -561,6 +562,33 @@ public class RestApiBO {
 		serverInfo.setChallengeSeriesEvent(parameterBO.getIntParam("DAILYSERIES_CURRENTID") + 1); 
 
 		return serverInfo;
+	}
+	
+	/**
+	 * Информация об событии сообщества
+	 * FIXME Сейчас код сделан под конкретное соревнование, в будущем нужно переделать
+	 */
+	public ArrayOfCommunityEventInfo getCommunityEventStats() {
+		ArrayOfCommunityEventInfo cEventInfo = new ArrayOfCommunityEventInfo();
+		LocalDateTime startTime = LocalDateTime.parse(parameterBO.getStrParam("CEVENT_STARTTIME"));
+		int targetGoal = parameterBO.getIntParam("CEVENT_STAGEGOAL");
+		
+		cEventInfo.setReward(parameterBO.getStrParam("CEVENT_REWARD"));
+		cEventInfo.setTargetGoal(targetGoal);
+		cEventInfo.setFinishDate(parameterBO.getStrParam("CEVENT_FINISHDATE"));
+		cEventInfo.setCEventDescription(parameterBO.getStrParam("CEVENT_DESCRIPTION"));
+		
+		int[] eventArray = {357, 368, 370, 375, 376, 377, 392, 393, 612}; // Team Escape events
+		for (int eventId : eventArray) {
+			EventEntity eventEntity = eventDAO.findById(eventId);
+			String trackName = eventEntity.getName();
+			int trackCounter = eventDataDAO.countCEventTrackResults(eventId, startTime, 24).intValue();
+			if (trackCounter > targetGoal) {
+				trackCounter = targetGoal;
+			}
+			cEventInfo.add(trackName, trackCounter);
+		}
+		return cEventInfo;
 	}
 	
 	/**

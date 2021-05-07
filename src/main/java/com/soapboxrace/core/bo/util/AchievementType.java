@@ -369,13 +369,17 @@ public enum AchievementType {
 	 */
 	BUICK_COLLECTOR(117), //
 	/**
+	 * Community Event: complete X events with X cops being stopped
+	 */
+	WEV3_CEVENT_COPHUNT(118), //
+	/**
 	 * drive in all events
 	 */
-	WEV2_TRAVELLER(118), //
+	WEV3_TRAVELLER(119), //
 	/**
 	 * install 4-star skills on all slots for X cars
 	 */
-	WEV2_SKILL_MASTER(119); //
+	WEV3_SKILL_MASTER(120); //
 	
 
 	private int id;

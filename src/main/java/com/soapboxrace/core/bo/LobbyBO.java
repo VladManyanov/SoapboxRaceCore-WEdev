@@ -203,7 +203,7 @@ public class LobbyBO {
             	sendJoinEvent(personaId, lobbyEntity, eventId, false, 0L);
             	setIsLobbyReserved(lobbyEntity, true);
             	if (!tempCreated) {
-            		lobbyCountdownBO.scheduleLobbyStart(lobbyEntity);
+            		lobbyCountdownBO.scheduleLobbyStart(lobbyEntity.getId());
             		lobbyEntity.setLobbyDateTimeStart(new Date());
             		lobbyDao.update(lobbyEntity);
             	}
@@ -211,7 +211,7 @@ public class LobbyBO {
 		}
 		else { // Private lobby
 			sendJoinEvent(personaId, lobbyEntity, eventId, true, 0L);
-			lobbyCountdownBO.scheduleLobbyStart(lobbyEntity);
+			lobbyCountdownBO.scheduleLobbyStart(lobbyEntity.getId());
 		}
 		// This lobby has been created again, when player got a invite, but the lobby itself is not exists anymore 
 		// (e.g other player has declined the invite)
@@ -219,7 +219,7 @@ public class LobbyBO {
 			//System.out.println("### tempCreated timer");
 			lobbyEntity.setLobbyDateTimeStart(new Date());
     		lobbyDao.update(lobbyEntity);
-			lobbyCountdownBO.scheduleLobbyStart(lobbyEntity); // On some cases we need to start the timer for 1-player lobby
+			lobbyCountdownBO.scheduleLobbyStart(lobbyEntity.getId()); // On some cases we need to start the timer for 1-player lobby
 		}
 		return lobbyEntity.getId();
 	}
@@ -272,7 +272,7 @@ public class LobbyBO {
 			Long hosterPersonaId = lobbyEntityNew.getPersonaId();
 			if (!personaId.equals(hosterPersonaId) && !lobbyEntityNew.isReserved()) {
 				//System.out.println("callbackRequest for " + hosterPersonaId);
-				lobbyCountdownBO.scheduleLobbyStart(lobbyEntityNew);
+				lobbyCountdownBO.scheduleLobbyStart(lobbyEntityNew.getId());
 				setIsLobbyReserved(lobbyEntityNew, true);
 				sendJoinEvent(hosterPersonaId, lobbyEntityNew, lobbyEntityNew.getEvent().getId(), false, personaId); // Send the join request for race hoster
 				lobbyEntityNew.setLobbyDateTimeStart(new Date());
@@ -334,6 +334,7 @@ public class LobbyBO {
 		if (lobbyEntity.getLobbyDateTimeStart() == null) {
 			lobbyEntity.setLobbyDateTimeStart(lobbyStartTime);
 			lobbyCountdown.setLobbyCountdownInMilliseconds(getLobbyCountdownInMilliseconds(lobbyStartTime));
+			lobbyCountdownBO.scheduleLobbyStart(lobbyEntity.getId());
 		}
 		else {
 			lobbyCountdown.setLobbyCountdownInMilliseconds(getLobbyCountdownInMilliseconds(lobbyEntity.getLobbyDateTimeStart()));

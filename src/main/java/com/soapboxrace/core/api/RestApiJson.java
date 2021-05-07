@@ -82,4 +82,18 @@ public class RestApiJson {
 		}
 		return Response.ok(bo.getServerStats()).build();
 	}
+	
+	/**
+	 * Информация об событии сообщества
+	 */
+	@GET
+	@Path("CommunityEventStats")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response communityEventStats(@NotNull @QueryParam("token") String token) {
+		if (!apiTokenDAO.verifyToken(token, sr.getRemoteAddr())) {
+			String accessDenied = parameterBO.getStrParam("RESTAPI_FAILURELINK");
+			return Response.temporaryRedirect(URI.create(accessDenied)).build();
+		}
+		return Response.ok(bo.getCommunityEventStats()).build();
+	}
 }

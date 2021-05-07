@@ -10,12 +10,14 @@ import com.soapboxrace.core.dao.EventDataDAO;
 import com.soapboxrace.core.dao.EventMissionsDAO;
 import com.soapboxrace.core.dao.EventSessionDAO;
 import com.soapboxrace.core.dao.PersonaDAO;
+import com.soapboxrace.core.dao.PersonaMissionsDAO;
 import com.soapboxrace.core.jpa.CustomCarEntity;
 import com.soapboxrace.core.jpa.EventDataEntity;
 import com.soapboxrace.core.jpa.EventEntity;
 import com.soapboxrace.core.jpa.EventMissionsEntity;
 import com.soapboxrace.core.jpa.EventSessionEntity;
 import com.soapboxrace.core.jpa.PersonaEntity;
+import com.soapboxrace.core.jpa.PersonaMissionsEntity;
 import com.soapboxrace.core.xmpp.OpenFireSoapBoxCli;
 import com.soapboxrace.core.xmpp.XmppEvent;
 import com.soapboxrace.jaxb.http.Accolades;
@@ -73,6 +75,12 @@ public class EventResultTeamEscapeBO {
 	
 	@EJB
 	private ParameterBO parameterBO;
+	
+	@EJB
+	private PersonaMissionsBO personaMissionsBO;
+	
+	@EJB
+	private PersonaMissionsDAO personaMissionsDAO;
 
 	public TeamEscapeEventResult handleTeamEscapeEnd(EventSessionEntity eventSessionEntity, Long activePersonaId,
 			TeamEscapeArbitrationPacket teamEscapeArbitrationPacket, Long eventEnded) {
@@ -155,26 +163,10 @@ public class EventResultTeamEscapeBO {
 		}
 		Long eventDataId = eventDataEntity.getId();
 		eventBO.updateEventCarInfo(activePersonaId, eventDataId, customCarEntity);
-		
 		ArrayOfTeamEscapeEntrantResult arrayOfTeamEscapeEntrantResult = new ArrayOfTeamEscapeEntrantResult();
+		int playersAmount = 1;
+		
 		EventEntity eventEntity = eventDAO.findById(currentEventId);
-		// +1 to play count for this track, MP
-		if (eventDataEntity.getRank() == 1 && arrayOfTeamEscapeEntrantResult.getTeamEscapeEntrantResult().size() > 1) {
-			eventEntity.setFinishCount(eventEntity.getFinishCount() + 1);
-			personaEntity.setRacesCount(personaEntity.getRacesCount() + 1);
-			eventDAO.update(eventEntity);
-			personaDAO.update(personaEntity);
-		}
-		// +1 to play count for this track, SP (No default SP TEs)
-		if (arrayOfTeamEscapeEntrantResult.getTeamEscapeEntrantResult().size() < 2) {
-			eventEntity.setFinishCount(eventEntity.getFinishCount() + 1);
-			personaEntity.setRacesCount(personaEntity.getRacesCount() + 1);
-			eventDAO.update(eventEntity);
-			personaDAO.update(personaEntity);
-			EventDataEntity eventDataEntitySP = eventDataDao.findByPersonaAndEventSessionId(activePersonaId, eventSessionId);
-			eventDataEntitySP.setIsSingle(true);
-			eventDataDao.update(eventDataEntitySP);
-		}
 		int carclasshash = eventEntity.getCarClassHash();
 		boolean isDNFActive = parameterBO.getBoolParam("DNF_ENABLED");
 		if (carclasshash == 607077938) {
@@ -194,6 +186,7 @@ public class EventResultTeamEscapeBO {
 			teamEscapeEntrantResult.setPersonaId(racer.getPersonaId());
 			teamEscapeEntrantResult.setRanking(racer.getRank());
 			arrayOfTeamEscapeEntrantResult.getTeamEscapeEntrantResult().add(teamEscapeEntrantResult);
+			playersAmount++;
 
 			if (!racer.getPersonaId().equals(activePersonaId)) {
 				XmppEvent xmppEvent = new XmppEvent(racer.getPersonaId(), openFireSoapBoxCli);
@@ -213,7 +206,25 @@ public class EventResultTeamEscapeBO {
 				achievementsBO.applyTeamEscapeGetAway(personaEntityGetAway);
 			}
 		}
-
+		
+		// +1 to play count for this track, MP
+		if (eventDataEntity.getRank() == 1 && playersAmount > 1) {
+			eventEntity.setFinishCount(eventEntity.getFinishCount() + 1);
+			personaEntity.setRacesCount(personaEntity.getRacesCount() + 1);
+			eventDAO.update(eventEntity);
+			personaDAO.update(personaEntity);
+		}
+		// +1 to play count for this track, SP (No default SP TEs)
+		if (playersAmount < 2) {
+			eventEntity.setFinishCount(eventEntity.getFinishCount() + 1);
+			personaEntity.setRacesCount(personaEntity.getRacesCount() + 1);
+			eventDAO.update(eventEntity);
+			personaDAO.update(personaEntity);
+			EventDataEntity eventDataEntitySP = eventDataDao.findByPersonaAndEventSessionId(activePersonaId, eventSessionId);
+			eventDataEntitySP.setIsSingle(true);
+			eventDataDao.update(eventDataEntitySP);
+		}
+		
 		TeamEscapeEventResult teamEscapeEventResult = new TeamEscapeEventResult();
 		if (isMission) {
 			boolean isDone = eventMissionsBO.getEventMissionAccolades(eventEntity, eventMissionsEntity, activePersonaId, teamEscapeArbitrationPacket, finishReason);
@@ -225,7 +236,7 @@ public class EventResultTeamEscapeBO {
 			}
 		}
 		if (!isMission) {
-			if (finishReason == 22 && arrayOfTeamEscapeEntrantResult.getTeamEscapeEntrantResult().size() > 1) {
+			if (finishReason == 22 && playersAmount > 1) {
 				teamEscapeEventResult.setAccolades(rewardTeamEscapeBO.getTeamEscapeAccolades(activePersonaId, teamEscapeArbitrationPacket, eventSessionEntity, 1, false));
 			}
 			else { // No rewards on timeout
@@ -236,6 +247,10 @@ public class EventResultTeamEscapeBO {
 		teamEscapeEventResult.setEntrants(arrayOfTeamEscapeEntrantResult);
 		teamEscapeEventResult.setEventId(currentEventId);
 		eventResultBO.defineFinishLobby(teamEscapeEventResult, eventSessionEntity, personaEntity.getRaceAgain());
+		
+		// Temporary Community Event code
+		personaMissionsBO.teamEscapeCEvent(playersAmount, teamEscapeArbitrationPacket, personaEntity, eventDataEntity.getArbitration());
+		
 		return teamEscapeEventResult;
 	}
 }

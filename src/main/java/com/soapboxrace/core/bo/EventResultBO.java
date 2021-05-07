@@ -262,7 +262,7 @@ public class EventResultBO {
 				oldLobbyEntity.setLobbyDateTimeStart(new Date());
 				oldLobbyEntity.setTeam1Id(null);
 				oldLobbyEntity.setTeam2Id(null);
-				lobbyCountdownBO.scheduleLobbyStart(oldLobbyEntity);
+				lobbyCountdownBO.scheduleLobbyStart(lobbyId);
 				lobbyEntrantDAO.deleteByLobby(oldLobbyEntity);
 				lobbyDAO.update(oldLobbyEntity);
 			}

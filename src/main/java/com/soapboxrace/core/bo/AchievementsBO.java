@@ -51,6 +51,7 @@ import com.soapboxrace.core.jpa.CarClassesEntity;
 import com.soapboxrace.core.jpa.EventDataEntity;
 import com.soapboxrace.core.jpa.EventSessionEntity;
 import com.soapboxrace.core.jpa.PersonaEntity;
+import com.soapboxrace.core.jpa.PersonaMissionsEntity;
 import com.soapboxrace.core.jpa.ProductEntity;
 import com.soapboxrace.core.jpa.RewardDropEntity;
 import com.soapboxrace.core.jpa.TokenSessionEntity;
@@ -151,6 +152,9 @@ public class AchievementsBO {
 	private CarClassesDAO carClassesDAO;
 	
 	@EJB
+	private PersonaMissionsBO personaMissionsBO;
+	
+	@EJB
 	private StringListConverter stringListConverter;
 
 	/**
@@ -192,6 +196,7 @@ public class AchievementsBO {
 
 		// Get the ranks & information about achievement stages
 		for (AchievementDefinitionEntity achievementDefinitionEntity : allAchievements) {
+			boolean displayAchievement = true;
 			Long currentValue = getCurrentValue(achievementDefinitionEntity, achievementPersonaEntity, achievementBrandsEntity, personaEntity);
 			AchievementDefinitionPacket achievementDefinitionPacket = new AchievementDefinitionPacket();
 			achievementDefinitionPacket.setAchievementDefinitionId(achievementDefinitionEntity.getId().intValue());
@@ -227,6 +232,9 @@ public class AchievementsBO {
 					}
 					achievementRankPacket.setState(personaAchievementRankState.getAchievementState());
 				} else {
+					if (!achievementDefinitionEntity.isVisible()) { 
+						displayAchievement = false; // Display this achievement only for players, who get it earlier
+					}
 					if (currentValue.longValue() > tmpRankValue || tmpRankValue == 0l) {
 						achievementRankPacket.setState(AchievementState.IN_PROGRESS);
 					} else {
@@ -242,7 +250,7 @@ public class AchievementsBO {
 			achievementDefinitionPacket.setBadgeDefinitionId(achievementDefinitionEntity.getBadgeDefinition().getId().intValue());
 			achievementDefinitionPacket.setCanProgress(achievementDefinitionEntity.isCanProgress());
 			achievementDefinitionPacket.setCurrentValue(currentValue);
-			achievementDefinitionPacket.setIsVisible(achievementDefinitionEntity.isVisible());
+			achievementDefinitionPacket.setIsVisible(displayAchievement);
 			achievementDefinitionPacket.setProgressText(achievementDefinitionEntity.getProgressText());
 			achievementDefinitionPacket.setStatConversion(StatConversion.valueOf(achievementDefinitionEntity.getStatConversion()));
 			achievementDefinitionPacketList.add(achievementDefinitionPacket);
@@ -481,6 +489,9 @@ public class AchievementsBO {
 				completedEvents = dailySeriesArray.length;
 			}
 			return Integer.valueOf(completedEvents).longValue();
+		case WEV3_CEVENT_COPHUNT:
+			int cEventProgress = personaMissionsBO.getPersonaMissions(personaEntity.getPersonaId()).getCEventGoalProgress();
+			return Integer.valueOf(cEventProgress).longValue();
 		default:
 			break;
 		}
@@ -525,7 +536,7 @@ public class AchievementsBO {
 	}
 
 	/**
-	 * Achievement progression with different metric values (Meters, time, etc)
+	 * Achievement progression with different range values (Meters, time, multiple objects, etc)
 	 * @param achievementPersonaEntity - player persona's achievement values
 	 * @param achievementType - achievement type (enum)
 	 * @param thresholdValue - current achievement progress value
@@ -1264,6 +1275,16 @@ public class AchievementsBO {
 			achievementPersonaEntity.setDailySeries(stringListConverter.listToStr(dailySeriesArray));
 			processAchievementByThresholdValue(achievementPersonaEntity, AchievementType.WEV3_SIDEQUEST, Integer.valueOf(eventsAmount).longValue());
 		}
+	}
+	
+	/**
+	 * Apply "Cop Hunt" Community Event achievement
+	 * @param personaEntity - player persona
+	 * @author Hypercycle
+	 */
+	public void applyCEventAchievement(PersonaEntity personaEntity, PersonaMissionsEntity personaMissionsEntity, int cEventType) {
+		AchievementPersonaEntity achievementPersonaEntity = achievementPersonaDAO.findByPersona(personaEntity);
+		processAchievementByThresholdRange(achievementPersonaEntity, AchievementType.valueOf(cEventType), Integer.valueOf(personaMissionsEntity.getCEventGoalProgress()).longValue());
 	}
 	
 	/**
