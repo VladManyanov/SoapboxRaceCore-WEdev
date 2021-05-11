@@ -265,6 +265,11 @@ public class CarBrandsList {
 			winsCount = achievementBrandsEntity.getBuickWins() + 1;
 			achievementBrandsEntity.setBuickWins(winsCount);
 			break;
+		case "POLESTAR":
+			brandAchievementDefId = 119;
+			winsCount = achievementBrandsEntity.getPolestarWins() + 1;
+			achievementBrandsEntity.setPolestarWins(winsCount);
+			break;
 		}
 		achievementBrandsDAO.update(achievementBrandsEntity);
 		brandInfo[0] = brandAchievementDefId;
@@ -273,66 +278,3 @@ public class CarBrandsList {
 	}
 
 }
-
-    //	TRAFFIC(0), //
-	//	ALFA_ROMEO(1), //
-	//	ARIEL(2), //
-	//	ASTON_MARTIN(3), //
-	//	AUDI(4), //
-	//	BAC(5), //
-	//	BENTLEY(6), //
-	//	BMW(7), //
-	//	BUGATTI(8), //
-	//	BUICK(9), //
-	//	CADILLAC(10), //
-	//	CATERHAM(11), //
-	//	CHEVROLET(12), //
-	//	CHRYSLER(13), //
-	//	CITROEN(14), //
-	//	DODGE(15), //
-	//	FORD(16), //
-	//	FORD_SHELBY(17), //
-	//	FERRARI(18), //
-	//	FIAT(19), //
-	//	GTA(20), //
-	//	GUMPERT(21), //
-	//	HENNESSEY(22), //
-	//	HOLDEN(23), //
-	//	HONDA(24), //
-	//	HUMMER(25), //
-	//	INFINITI(26), //
-	//	ITALDESIGN(27), //
-	//	JAGUAR(28), //
-	//	JEEP(29), //
-	//	KOENIGSEGG(30), //
-	//	LADA(31), //
-	//	LAMBORGHINI(32), //
-	//	LANCIA(33), //
-	//	LEXUS(34), //
-	//	LOTUS(35), //
-	//	MARUSSIA(36), //
-	//	MASERATI(37), //
-	//	MAZDA(38), //
-	//	MCLAREN(39), //
-	//	MERCEDESBENZ(40), //
-	//	MITSUBISHI(41), //
-	//	NFS(42), //
-	//	NISSAN(43), //
-	//	OPEL(44), //
-	//	PAGANI(45), //
-	//	PEUGEOT(46), //
-	//	PLYMOUTH(47), //
-	//	PONTIAC(48), //
-	//	PORSCHE(49), //
-	//	RENAULT(50), //
-	//	SCION(51), //
-	//	SEAT(52), //
-	//	SHELBY(53), //
-	//	SMART(54), //
-	//	SRT(55), //
-	//	SUBARU(56), //
-	//	TESLA(57), //
-	//	TOYOTA(58), //
-	//	VAUXHALL(59), //
-	//	VOLKSWAGEN(60), //
-	//	VOLVO(61); //
