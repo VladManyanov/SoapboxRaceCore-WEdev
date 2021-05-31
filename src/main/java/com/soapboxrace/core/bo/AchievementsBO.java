@@ -196,7 +196,7 @@ public class AchievementsBO {
 
 		// Get the ranks & information about achievement stages
 		for (AchievementDefinitionEntity achievementDefinitionEntity : allAchievements) {
-			boolean displayAchievement = true;
+			int displayAchievementId = 0;
 			Long currentValue = getCurrentValue(achievementDefinitionEntity, achievementPersonaEntity, achievementBrandsEntity, personaEntity);
 			AchievementDefinitionPacket achievementDefinitionPacket = new AchievementDefinitionPacket();
 			achievementDefinitionPacket.setAchievementDefinitionId(achievementDefinitionEntity.getId().intValue());
@@ -223,6 +223,7 @@ public class AchievementsBO {
 				AchievementStateEntity personaAchievementRankState = achievementStateDAO.findByPersonaAchievementRank(personaEntity, achievementRankEntity);
 				if (personaAchievementRankState != null) {
 					try {
+						displayAchievementId = personaAchievementRankState.getId();
 						LocalDateTime achievedOn = personaAchievementRankState.getAchievedOn();
 						GregorianCalendar gcal = GregorianCalendar.from(achievedOn.atZone(ZoneId.systemDefault()));
 						XMLGregorianCalendar xmlCalendar = DatatypeFactory.newInstance().newXMLGregorianCalendar(gcal);
@@ -232,9 +233,6 @@ public class AchievementsBO {
 					}
 					achievementRankPacket.setState(personaAchievementRankState.getAchievementState());
 				} else {
-					if (!achievementDefinitionEntity.isVisible()) { 
-						displayAchievement = false; // Display this achievement only for players, who get it earlier
-					}
 					if (currentValue.longValue() > tmpRankValue || tmpRankValue == 0l) {
 						achievementRankPacket.setState(AchievementState.IN_PROGRESS);
 					} else {
@@ -244,7 +242,10 @@ public class AchievementsBO {
 				}
 				achievementRankPacketList.add(achievementRankPacket);
 			}
-
+			boolean displayAchievement = true;
+			if (!achievementDefinitionEntity.isVisible() && displayAchievementId == 0) { 
+				displayAchievement = false; // Display this achievement only for players, who get it earlier
+			}
 			achievementDefinitionPacket.setAchievementRanks(arrayOfAchievementRankPacket);
 
 			achievementDefinitionPacket.setBadgeDefinitionId(achievementDefinitionEntity.getBadgeDefinition().getId().intValue());

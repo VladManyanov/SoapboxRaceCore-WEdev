@@ -258,8 +258,8 @@ public class LobbyBO {
 						lobbyEntrantEntity.setLobby(lobbyEntityCheck);
 						lobbyEntrants.add(lobbyEntrantEntity);
 						sendJoinEvent(personaId, lobbyEntityCheck, eventId, false, 0L); // Join this lobby
+						return; // Stop the search function
 					}
-					break;
 				}
 				else {
 					lobbyEntityNew = lobbyEntityCheck; // Copy that lobby, since we will populate that new lobby
