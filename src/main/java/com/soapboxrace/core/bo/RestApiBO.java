@@ -26,6 +26,11 @@ import com.soapboxrace.core.dao.ProductDAO;
 import com.soapboxrace.core.dao.RecordsDAO;
 import com.soapboxrace.core.dao.ReportDAO;
 import com.soapboxrace.core.dao.ServerInfoDAO;
+import com.soapboxrace.core.dao.TeamsDAO;
+import com.soapboxrace.core.dao.TeamsHistoryDAO;
+import com.soapboxrace.core.dao.TeamsMapEventsDAO;
+import com.soapboxrace.core.dao.TeamsRegionsDAO;
+import com.soapboxrace.core.dao.TeamsTokensDAO;
 import com.soapboxrace.core.dao.TreasureHuntDAO;
 import com.soapboxrace.core.dao.UserDAO;
 import com.soapboxrace.core.jpa.APITokenEntity;
@@ -44,6 +49,9 @@ import com.soapboxrace.core.jpa.ProductEntity;
 import com.soapboxrace.core.jpa.ProfileIconEntity;
 import com.soapboxrace.core.jpa.RecordsEntity;
 import com.soapboxrace.core.jpa.ServerInfoEntity;
+import com.soapboxrace.core.jpa.TeamsMapEventsEntity;
+import com.soapboxrace.core.jpa.TeamsRegionsEntity;
+import com.soapboxrace.core.jpa.TeamsTokensEntity;
 import com.soapboxrace.core.jpa.TreasureHuntEntity;
 import com.soapboxrace.core.jpa.UserEntity;
 import com.soapboxrace.jaxb.http.APITokenResponse;
@@ -62,6 +70,8 @@ import com.soapboxrace.jaxb.http.MostPopularRaces.Race;
 import com.soapboxrace.jaxb.http.PersonaBase;
 import com.soapboxrace.jaxb.http.PersonaInfo;
 import com.soapboxrace.jaxb.http.PersonaPremiumInfo;
+import com.soapboxrace.jaxb.http.TeamsMapInfo;
+import com.soapboxrace.jaxb.http.TeamsMapInfo.MapRegion.MapEvent;
 import com.soapboxrace.jaxb.http.TopProfileRaces;
 import com.soapboxrace.jaxb.http.TopProfileRaces.ProfileDataRaces;
 import com.soapboxrace.jaxb.http.TopProfileScore;
@@ -175,6 +185,21 @@ public class RestApiBO {
 	
 	@EJB
 	private ServerInfoDAO serverInfoDAO;
+	
+	@EJB
+	private TeamsRegionsDAO teamsRegionsDAO;
+	
+	@EJB
+	private TeamsHistoryDAO teamsHistoryDAO;
+	
+	@EJB
+	private TeamsDAO teamsDAO;
+	
+	@EJB
+	private TeamsMapEventsDAO teamsMapEventsDAO;
+	
+	@EJB
+	private TeamsTokensDAO teamsTokensDAO;
 	
 	@EJB
 	private TimeReadConverter timeReadConverter;
@@ -589,6 +614,59 @@ public class RestApiBO {
 			cEventInfo.add(trackName, trackCounter);
 		}
 		return cEventInfo;
+	}
+	
+	/**
+	 * Данные о карте Командных Гонок и территориях
+	 */
+	public TeamsMapInfo getTeamsMapInfo() {
+		TeamsMapInfo teamsMap = new TeamsMapInfo();
+		int currentSeason = parameterBO.getIntParam("TEAM_CURRENTSEASON");
+		teamsMap.setSeason(currentSeason);
+		teamsMap.setPrevSeasonWinner(teamsDAO.findById(teamsHistoryDAO.getTopTeamIdFromPreviousSeason(currentSeason)).getTeamName());
+		teamsMap.setTopPointsTeam(teamsDAO.getTopTeamName());
+		teamsMap.setTopRegionsTeam(teamsDAO.getRegionsTopTeam()); 
+		for (TeamsRegionsEntity region : teamsRegionsDAO.findAllRegions()) {
+			String teamOwnerName = "";
+			if (region.getTeamOwner() != null) {
+				teamOwnerName = region.getTeamOwner().getTeamName();
+			}
+			String teamPrevOwnerName = "";
+			if (region.getTeamPrevOwner() != null) {
+				teamPrevOwnerName = region.getTeamPrevOwner().getTeamName();
+			}
+			
+			List<MapEvent> regionEvents = new ArrayList<>();
+			List<TeamsMapEventsEntity> mapEventsEntityList = teamsMapEventsDAO.findByRegion(region);
+			for (TeamsMapEventsEntity mapEventEntity : mapEventsEntityList) {
+				int eventId = mapEventEntity.getEventId();
+				EventEntity eventEntity = eventDAO.findById(eventId);
+				String teamWinnerName = "";
+				if (mapEventEntity.getTeamWinner() != null) {
+					teamWinnerName = mapEventEntity.getTeamWinner().getTeamName();
+				}
+				String forceCarModel = "";
+				if (mapEventEntity.getForceVehicleHash() != 0) {
+					forceCarModel = carClassesDAO.findByHash(mapEventEntity.getForceVehicleHash()).getFullName();
+				}
+				int winPoints = 0; // Сделать отдельный класс с расчётом очков для трассы в текущий момент
+				
+				String tokenApplied = ""; 
+				String tokenParameter = ""; 
+				TeamsTokensEntity teamsTokensEntity = teamsTokensDAO.findByAffectedEventId(eventId);
+				if (teamsTokensEntity != null) {
+					tokenApplied = teamsTokensEntity.getTokenType(); 
+					tokenParameter = String.valueOf(teamsTokensEntity.getTokenValue()); // Вместо цифры должен быть параметр жетона
+				}
+				
+				MapEvent mapEvent = new MapEvent(eventEntity.getId(), eventEntity.getName(), teamWinnerName, forceCarModel, winPoints,
+						tokenApplied, tokenParameter, mapEventEntity.getPosX(), mapEventEntity.getPosY());
+				regionEvents.add(mapEvent);
+			}
+			teamsMap.addMapRegion(region.getRegionId().intValue(), region.getRegionName(), teamOwnerName, teamPrevOwnerName,
+					region.getStartBonus(), region.getActivity(), region.getPosX(), region.getPosY(), regionEvents);
+		}
+		return teamsMap;
 	}
 	
 	/**

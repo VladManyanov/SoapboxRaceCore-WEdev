@@ -754,7 +754,7 @@ public class AchievementsBO {
 					item.setTitle(achievementRankEntity.getRewardText());
 				}
 				item.setHash(product.getHash());
-				basketBO.buyCar(product.getProductId(), personaEntity, true, userEntity);
+				basketBO.buyCar(product.getProductId(), personaEntity, true, userEntity, false);
 				break;
 			case INVENTORY:
 				String productTitle = product.getProductTitle();

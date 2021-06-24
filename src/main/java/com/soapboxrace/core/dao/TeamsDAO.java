@@ -28,6 +28,22 @@ public class TeamsDAO extends BaseDAO<TeamsEntity> {
 		return query.getResultList();
 	}
 	
+	public String getTopTeamName() {
+		TypedQuery<TeamsEntity> query = entityManager.createNamedQuery("TeamsEntity.findAllTeams", TeamsEntity.class);
+		if (query.getResultList().isEmpty()) {
+			return "";
+		}
+		return query.getResultList().get(0).getTeamName();
+	}
+	
+	public String getRegionsTopTeam() {
+		TypedQuery<TeamsEntity> query = entityManager.createNamedQuery("TeamsEntity.getRegionsTopTeam", TeamsEntity.class);
+		if (query.getResultList().isEmpty()) {
+			return "";
+		}
+		return query.getResultList().get(0).getTeamName();
+	}
+	
 	public TeamsEntity findByName(String teamName) {
 		teamName = teamName.toUpperCase();
 		TypedQuery<TeamsEntity> query = entityManager.createNamedQuery("TeamsEntity.findByName", TeamsEntity.class);

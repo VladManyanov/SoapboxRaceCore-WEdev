@@ -228,7 +228,11 @@ public class LobbyCountdownBO {
 					personaPresenceDAO.updateDisablePU(personaId, true); // Disable Power-Ups for Team Racing player
 			    }
 			}
+			if (eventEntity.getBaseEvent() != 0) {
+				personaPresenceDAO.updateDisablePU(personaId, true); // Disable Power-Ups during Classic MP races
+			}
 			personaArray.add(personaId);
+			
 //			if (entrantPersona.getTeam() != null && team2NOS != null) {
 //				String puStatus = "TXT_WEV3_BASEANNOUNCER_TEAMPU_ON";
 //				if (!teamNOS) {puStatus = "TXT_WEV3_BASEANNOUNCER_TEAMPU_OFF";}

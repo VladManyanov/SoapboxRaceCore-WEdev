@@ -1,5 +1,6 @@
 package com.soapboxrace.core.bo;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import javax.ejb.EJB;
@@ -10,6 +11,7 @@ import com.soapboxrace.core.dao.PersonaDAO;
 import com.soapboxrace.core.dao.PersonaPresenceDAO;
 import com.soapboxrace.core.dao.ReportDAO;
 import com.soapboxrace.core.dao.TeamsDAO;
+import com.soapboxrace.core.dao.TeamsMatchesDAO;
 import com.soapboxrace.core.dao.TokenSessionDAO;
 import com.soapboxrace.core.dao.UserDAO;
 import com.soapboxrace.core.dao.VinylStorageDAO;
@@ -17,6 +19,7 @@ import com.soapboxrace.core.dao.VisualPartDAO;
 import com.soapboxrace.core.jpa.PersonaEntity;
 import com.soapboxrace.core.jpa.ReportEntity;
 import com.soapboxrace.core.jpa.TeamsEntity;
+import com.soapboxrace.core.jpa.TeamsMatchesEntity;
 import com.soapboxrace.core.jpa.UserEntity;
 import com.soapboxrace.core.xmpp.OpenFireRestApiCli;
 import com.soapboxrace.core.xmpp.OpenFireSoapBoxCli;
@@ -82,6 +85,9 @@ public class WindowCommandsBO {
 	
 	@EJB
 	private FriendBO friendBO;
+	
+	@EJB
+	private TeamsMatchesDAO teamsMatchesDAO;
 
 	// Teams actions parser into "add a friend" window - Hypercycle
 	// XMPP messages can go into timeouts, if ' symbol is used
@@ -352,6 +358,50 @@ public class WindowCommandsBO {
 				personaSender.setRaceAgain(true);
 				personaDAO.update(personaSender);
 				openFireSoapBoxCli.send(XmppChat.createSystemMessage("### You will get the re-created lobby on the finish."), personaId);
+			}
+			return null;
+		}
+		// Invite another Team for Team Match
+		if (displayName.startsWith("/TEAMMATCH ")) {
+			if (personaSender.getTeam() == null) {
+				openFireSoapBoxCli.send(XmppChat.createSystemMessage("### You cannot start Team Match without a Team."), personaId);
+				return null;
+			}
+			String secondTeamName = displayName.replaceFirst("/TEAMMATCH ", "");
+			TeamsEntity secondTeam = teamsDAO.findByName(secondTeamName);
+			if (secondTeam == null) {
+				openFireSoapBoxCli.send(XmppChat.createSystemMessage("### Wrong Team name."), personaId);
+				return null;
+			}
+			// Добавить проверку на другие инвайты этой же команды на матч
+			TeamsMatchesEntity teamsMatchesEntity = new TeamsMatchesEntity();
+			teamsMatchesEntity.setTeam1(personaSender.getTeam());
+			teamsMatchesEntity.setTeam2(secondTeam);
+			teamsMatchesEntity.setCreationDate(LocalDateTime.now());
+			// Ввод фильтров матча по классу и бонусам
+			teamsMatchesEntity.setForceClassHash(0);
+			teamsMatchesEntity.setForcePowerups(true);
+			teamsMatchesDAO.insert(teamsMatchesEntity);
+			
+			openFireSoapBoxCli.send(XmppChat.createSystemMessage("### Team " + secondTeamName + " has been invited to Team Match."), personaId);
+			return null;
+		}
+		// Check if other Team has invited your Team for Team Match
+		if (displayName.contentEquals("/TEAMMATCHJOIN")) {
+			if (personaSender.getTeam() == null) {
+				openFireSoapBoxCli.send(XmppChat.createSystemMessage("### You cannot participate on Team Match without a Team."), personaId);
+				return null;
+			}
+			// Добавить отображение инвайтов для команды, если их несколько
+			List<TeamsMatchesEntity> teamsMatchesInvites = teamsMatchesDAO.findInvitesByTeam(personaSender.getTeam());
+			if (!teamsMatchesInvites.isEmpty()) {
+				TeamsMatchesEntity teamsMatchesEntity = teamsMatchesInvites.get(0);
+				teamsMatchesEntity.setAccepted(true);
+				teamsMatchesEntity.setEventId1(0);
+				teamsMatchesEntity.setEventId2(0);
+				teamsMatchesEntity.setEventId3(0);
+				teamsMatchesDAO.update(teamsMatchesEntity);
+				openFireSoapBoxCli.send(XmppChat.createSystemMessage("### Team Match invite against " + teamsMatchesEntity.getTeam1().getTeamName() + " team has been accepted."), personaId);
 			}
 			return null;
 		}

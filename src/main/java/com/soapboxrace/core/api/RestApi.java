@@ -236,6 +236,19 @@ public class RestApi {
 		return Response.ok(bo.getServerStats()).build();
 	}
 	/**
+	 * Данные о карте Командных Гонок и территориях
+	 */
+	@GET
+	@Path("TeamsMap")
+	@Produces(MediaType.APPLICATION_XML)
+	public Response teamsMap(@NotNull @QueryParam("token") String token) {
+		if (!apiTokenDAO.verifyToken(token, sr.getRemoteAddr())) {
+			String accessDenied = parameterBO.getStrParam("RESTAPI_FAILURELINK");
+			return Response.temporaryRedirect(URI.create(accessDenied)).build();
+		}
+		return Response.ok(bo.getTeamsMapInfo()).build();
+	}
+	/**
 	 * Страница Списка профилей
 	 */
 	@GET

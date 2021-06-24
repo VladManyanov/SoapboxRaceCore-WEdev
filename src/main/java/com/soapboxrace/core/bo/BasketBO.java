@@ -215,7 +215,8 @@ public class BasketBO {
 		return CommerceResultStatus.SUCCESS;
 	}
 
-	public CommerceResultStatus buyCar(String productId, PersonaEntity personaEntity, boolean webAction, UserEntity userEntity) {
+	public CommerceResultStatus buyCar(String productId, PersonaEntity personaEntity, boolean webAction, 
+			UserEntity userEntity, boolean changeDefaultCar) {
 		if (!webAction && getPersonaCarCount(personaEntity.getPersonaId()) >= personaEntity.getCarSlots()) {
 			return CommerceResultStatus.FAIL_INSUFFICIENT_CAR_SLOTS;
 		}
@@ -268,7 +269,9 @@ public class BasketBO {
 		ownedCarEntity.setCarVersion(carClassesEntity.getCarVersion());
 		carSlotDAO.insert(carSlotEntity);
 		
-		personaBo.changeDefaultCar(personaEntity.getPersonaId(), carSlotEntity.getOwnedCar().getId());
+		if (changeDefaultCar) {
+			personaBo.changeDefaultCar(personaEntity.getPersonaId(), carSlotEntity.getOwnedCar().getId());
+		}
 		if (parameterBO.getBoolParam("DISABLE_ITEM_AFTER_BUY")) {
 			productEntity.setEnabled(false);
 			productDao.update(productEntity);

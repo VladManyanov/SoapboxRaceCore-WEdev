@@ -175,7 +175,7 @@ public class Personas {
 			commerceResultTrans.setPurchasedCars(arrayOfOwnedCarTrans);
 			arrayOfOwnedCarTrans.getOwnedCarTrans().add(ownedCarTrans);
 
-			commerceResultTrans.setStatus(basketBO.buyCar(productId, personaEntity, false, userEntity));
+			commerceResultTrans.setStatus(basketBO.buyCar(productId, personaEntity, false, userEntity, true));
 		}
 		return commerceResultTrans;
 	}
@@ -327,7 +327,7 @@ public class Personas {
 			String carsBundleInit = parameterBO.getStrParam("ITEM_SPECIALCARS_BUNDLE");
             String[] carsBundle = carsBundleInit.split(",");
             for (String carProduct : carsBundle) { // Give every car in the list (productId), to the player
-            	basketBO.buyCar(carProduct, personaEntity, true, userEntity);
+            	basketBO.buyCar(carProduct, personaEntity, true, userEntity, false);
             }
 			return "Cars (" + carsBundle.length + ") was given to the player " + personaEntity.getName() + ".";
 		}

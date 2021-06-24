@@ -15,7 +15,8 @@ import javax.persistence.Table;
 @Entity
 @Table(name = "TEAMSHISTORY")
 @NamedQueries({ //
-		@NamedQuery(name = "TeamsHistoryEntity.findBySeason", query = "SELECT obj FROM TeamsHistoryEntity obj WHERE obj.season = :season")
+		@NamedQuery(name = "TeamsHistoryEntity.findBySeason", query = "SELECT obj FROM TeamsHistoryEntity obj WHERE obj.season = :season"), //
+		@NamedQuery(name = "TeamsHistoryEntity.getTopTeamIdFromPreviousSeason", query = "SELECT obj FROM TeamsHistoryEntity obj WHERE obj.season = :season ORDER BY points DESC") //
 })
 public class TeamsHistoryEntity {
 

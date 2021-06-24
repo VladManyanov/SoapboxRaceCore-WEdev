@@ -6,6 +6,7 @@ import javax.ejb.Stateless;
 import com.soapboxrace.core.bo.util.EventModeType;
 import com.soapboxrace.core.bo.util.RewardVO;
 import com.soapboxrace.core.bo.PersonaBO;
+import com.soapboxrace.core.dao.EventDAO;
 import com.soapboxrace.core.dao.PersonaDAO;
 import com.soapboxrace.core.jpa.EventEntity;
 import com.soapboxrace.core.jpa.EventSessionEntity;
@@ -30,6 +31,9 @@ public class RewardRouteBO extends RewardBO {
 	
 	@EJB
 	private ParameterBO parameterBO;
+	
+	@EJB
+	private EventDAO eventDAO;
 
 	public Accolades getRouteAccolades(Long activePersonaId, RouteArbitrationPacket routeArbitrationPacket, EventSessionEntity eventSessionEntity,
 			ArrayOfRouteEntrantResult arrayOfRouteEntrantResult, int isDropableMode, boolean isMission) {
@@ -38,6 +42,10 @@ public class RewardRouteBO extends RewardBO {
 			isSingle = true;
 		}
 		EventEntity eventEntity = eventSessionEntity.getEvent();
+		int baseEvent = eventEntity.getBaseEvent();
+		if (baseEvent != 0 && !isSingle) { // If Training event (or Classic MP) event is completed online, the rewards will be taken from regular event
+			eventEntity = eventDAO.findById(baseEvent);
+		}
 		
 		// Interceptor events doesn't have a legit time checks due to force time limits
 		if (EventModeType.INTERCEPTOR.getId() != eventEntity.getEventModeId() && !legitRaceBO.isLegit(activePersonaId, routeArbitrationPacket, eventSessionEntity, isSingle)) {

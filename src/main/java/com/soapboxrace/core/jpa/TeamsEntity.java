@@ -21,7 +21,8 @@ import javax.persistence.Table;
 @Table(name = "TEAMS")
 @NamedQueries({ //
 		@NamedQuery(name = "TeamsEntity.findByName", query = "SELECT obj FROM TeamsEntity obj WHERE obj.teamName = :teamName"),
-		@NamedQuery(name = "TeamsEntity.findAllTeams", query = "SELECT obj FROM TeamsEntity obj WHERE obj.active = true ORDER BY obj.teamPoints DESC") //
+		@NamedQuery(name = "TeamsEntity.findAllTeams", query = "SELECT obj FROM TeamsEntity obj WHERE obj.active = true ORDER BY obj.teamPoints DESC"), //
+		@NamedQuery(name = "TeamsEntity.getRegionsTopTeam", query = "SELECT obj FROM TeamsEntity obj WHERE obj.active = true ORDER BY obj.regionsCount DESC, obj.teamPoints DESC") //
 })
 public class TeamsEntity {
 
@@ -36,6 +37,7 @@ public class TeamsEntity {
 	private int playersCount;
 	private String currentRank;
 	private int medals;
+	private int regionsCount;
 
 	@ManyToOne
 	@JoinColumn(name = "LEADERID", referencedColumnName = "ID", foreignKey = @ForeignKey(name = "TEAMS_PERSONA_FK"))
@@ -129,6 +131,14 @@ public class TeamsEntity {
 
 	public void setMedals(int medals) {
 		this.medals = medals;
+	}
+	
+	public int getRegionsCount() {
+		return regionsCount;
+	}
+
+	public void setRegionsCount(int regionsCount) {
+		this.regionsCount = regionsCount;
 	}
 
 }
