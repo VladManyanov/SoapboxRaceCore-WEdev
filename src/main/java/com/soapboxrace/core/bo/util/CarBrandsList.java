@@ -270,6 +270,11 @@ public class CarBrandsList {
 			winsCount = achievementBrandsEntity.getPolestarWins() + 1;
 			achievementBrandsEntity.setPolestarWins(winsCount);
 			break;
+		case "ARIEL":
+			brandAchievementDefId = 120;
+			winsCount = achievementBrandsEntity.getArielWins() + 1;
+			achievementBrandsEntity.setArielWins(winsCount);
+			break;
 		}
 		achievementBrandsDAO.update(achievementBrandsEntity);
 		brandInfo[0] = brandAchievementDefId;

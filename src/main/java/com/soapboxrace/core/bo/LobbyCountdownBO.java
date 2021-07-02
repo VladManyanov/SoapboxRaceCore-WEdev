@@ -130,7 +130,7 @@ public class LobbyCountdownBO {
 		int entrantCount = lobbyEntrantDAO.getPlayerCount(lobbyEntity);
 		
 		List<LobbyEntrantEntity> entrants = lobbyEntity.getEntrants();
-		if (entrantCount < 2 || entrantCount >= 8) {
+		if (entrantCount < 2 || entrantCount > 8) {
 			for (LobbyEntrantEntity poorPlayer : entrants) {
 				openFireSoapBoxCli.send(XmppChat.createSystemMessage("### Too low or too many players in this lobby - cancelled."), poorPlayer.getPersona().getPersonaId());
 			}
@@ -151,6 +151,8 @@ public class LobbyCountdownBO {
 		eventSessionEntity.setEvent(eventEntity);
 		eventSessionEntity.setTeam1Id(lobbyEntity.getTeam1Id());
 		eventSessionEntity.setTeam2Id(lobbyEntity.getTeam2Id());
+		boolean isPrivate = lobbyEntity.getIsPrivate();
+		eventSessionEntity.setPrivate(isPrivate);
 		
 		Long team1Id = eventSessionEntity.getTeam1Id();
 		Long team2Id = eventSessionEntity.getTeam2Id();
@@ -228,16 +230,11 @@ public class LobbyCountdownBO {
 					personaPresenceDAO.updateDisablePU(personaId, true); // Disable Power-Ups for Team Racing player
 			    }
 			}
-			if (eventEntity.getBaseEvent() != 0) {
+			if (eventEntity.getBaseEvent() != 0 && !isPrivate) {
 				personaPresenceDAO.updateDisablePU(personaId, true); // Disable Power-Ups during Classic MP races
+				achievementsBO.broadcastUICustom(personaId, "TXT_WEV3_BASEANNOUNCER_POWERUPS_OFF", "POWERUPSMODE", 4);
 			}
 			personaArray.add(personaId);
-			
-//			if (entrantPersona.getTeam() != null && team2NOS != null) {
-//				String puStatus = "TXT_WEV3_BASEANNOUNCER_TEAMPU_ON";
-//				if (!teamNOS) {puStatus = "TXT_WEV3_BASEANNOUNCER_TEAMPU_OFF";}
-//				achievementsBO.broadcastUICustom(personaId, puStatus, "TEAMPUMODE", 4);
-//			}
 		}
 		if (isInterceptorEvent) {
 			if (!personaCops.isEmpty() && !personaRacers.isEmpty()) {	
@@ -282,7 +279,6 @@ public class LobbyCountdownBO {
 		xmppLobby.sendRelay(lobbyLaunched, xMPP_CryptoTicketsType);
 		
 		eventSessionEntity.setPlayerList(stringListConverter.listToStr(personaArray)); // Save the current entrants list
-		eventSessionEntity.setPrivate(lobbyEntity.getIsPrivate());
 		eventSessionEntity.setLobbyId(lobbyId);
 		lockLobby(lobbyEntity);
 		eventSessionDao.update(eventSessionEntity);

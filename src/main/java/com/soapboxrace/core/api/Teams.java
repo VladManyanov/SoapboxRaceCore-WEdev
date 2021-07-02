@@ -8,7 +8,6 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
 import com.soapboxrace.core.bo.ParameterBO;
-import com.soapboxrace.core.bo.PromoCodeBO;
 import com.soapboxrace.core.bo.TeamsBO;
 
 @Path("/Teams")

@@ -484,6 +484,8 @@ public class AchievementsBO {
 			return Integer.valueOf(achievementBrandsEntity.getBuickWins()).longValue();
 		case POLESTAR_COLLECTOR:
 			return Integer.valueOf(achievementBrandsEntity.getPolestarWins()).longValue();
+		case ARIEL_COLLECTOR:
+			return Integer.valueOf(achievementBrandsEntity.getArielWins()).longValue();
 		case WEV3_SIDEQUEST:
 			int completedEvents = 0;
 			String dailySeriesStr = achievementPersonaEntity.getDailySeries();

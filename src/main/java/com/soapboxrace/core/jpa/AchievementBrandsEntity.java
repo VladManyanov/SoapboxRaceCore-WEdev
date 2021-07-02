@@ -68,6 +68,7 @@ public class AchievementBrandsEntity {
 	private int flankerWins;
 	private int buickWins;
 	private int polestarWins;
+	private int arielWins;
 	
 	public Long getPersonaId() {
 		return personaId;
@@ -469,6 +470,14 @@ public class AchievementBrandsEntity {
 
 	public void setPolestarWins(int polestarWins) {
 		this.polestarWins = polestarWins;
+	}
+	
+	public int getArielWins() {
+		return arielWins;
+	}
+
+	public void setArielWins(int arielWins) {
+		this.arielWins = arielWins;
 	}
 	
 }

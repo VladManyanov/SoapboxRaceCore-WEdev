@@ -76,16 +76,13 @@ public class Powerups {
 		Long[] infoPackage = tokenBO.getActivePersonaUserTeamId(securityToken);
 		Long activePersonaId = infoPackage[0].longValue();
 		Long userId = infoPackage[1].longValue();
-		Long teamId = infoPackage[2].longValue();
+//		Long teamId = infoPackage[2].longValue();
 		PersonaPresenceEntity personaPresenceEntity = personaPresenceDAO.findByUserId(userId);
 //		Long serverEventSessionId = personaPresenceEntity.getCurrentEventSessionId();
-		Long serverEventModeId = personaPresenceEntity.getCurrentEventModeId();
 		boolean isPUDisabled = personaPresenceEntity.getDisablePU();
 
 		if (parameterBO.getBoolParam("POWERUPS_ENABLED")) {
-			// TeamNOS - if Team race has been started without PUs, team players wouldn't be able to use it, but others will be able
-			// Racers on Interceptor mode is unable to use PUs too
-			if (isPUDisabled && (teamId != 0 || serverEventModeId == 100)) {
+			if (isPUDisabled) {
 				return "";
 			}
 			XMPP_ResponseTypePowerupActivated powerupActivatedResponse = eventPowerupsBO.powerupResponse(powerupHash, targetId, activePersonaId);

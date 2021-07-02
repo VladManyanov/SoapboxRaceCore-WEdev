@@ -377,13 +377,17 @@ public enum AchievementType {
 	 */
 	POLESTAR_COLLECTOR(119), //
 	/**
+	 * own [x] [car-brand](s) in your garage
+	 */
+	ARIEL_COLLECTOR(120), //
+	/**
 	 * drive in all events
 	 */
-	WEV3_TRAVELLER(120), //
+	WEV3_TRAVELLER(121), //
 	/**
 	 * install 4-star skills on all slots for X cars
 	 */
-	WEV3_SKILL_MASTER(121); //
+	WEV3_SKILL_MASTER(122); //
 	
 
 	private int id;
