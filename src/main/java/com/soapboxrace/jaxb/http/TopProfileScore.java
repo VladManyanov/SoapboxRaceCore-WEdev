@@ -13,29 +13,29 @@ import javax.xml.bind.annotation.XmlType;
  * @author Vadimka
  */
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "TopProfile", propOrder = {
-	"profileData"
+@XmlType(name = "DSTopProfile", propOrder = {
+	"dsProfileData"
 })
 public class TopProfileScore {
 
-	@XmlElement(name = "Profile", nillable = true)
-	protected List<ProfileDataScore> profileData;
+	@XmlElement(name = "DSProfile", nillable = true)
+	protected List<ProfileDataScore> dsProfileData;
 	
 	public TopProfileScore() {
-		profileData = new ArrayList<ProfileDataScore>();
+		dsProfileData = new ArrayList<ProfileDataScore>();
 	}
 	/**
 	 * Добавить профиль в список
 	 * @param profile - объект профиля
 	 */
-	public void add(ProfileDataScore profile) {
-		profileData.add(profile);
+	public void add(ProfileDataScore dsProfile) {
+		dsProfileData.add(dsProfile);
 	}
 	/**
 	 * Профиль с именем, иконкой и количеством очков
 	 */
 	@XmlAccessorType(XmlAccessType.FIELD)
-	@XmlType(name = "profile", propOrder = {
+	@XmlType(name = "dsprofile", propOrder = {
 		"iconindex",
 		"name",
 		"score",

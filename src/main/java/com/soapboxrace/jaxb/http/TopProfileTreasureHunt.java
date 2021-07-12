@@ -13,29 +13,29 @@ import javax.xml.bind.annotation.XmlType;
  * @author Vadimka
  */
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "TopProfile", propOrder = {
-	"profileData"
+@XmlType(name = "THTopProfile", propOrder = {
+	"thProfileData"
 })
 public class TopProfileTreasureHunt {
 
-	@XmlElement(name = "Profile", nillable = true)
-	protected List<ProfileDataTreasureHunt> profileData;
+	@XmlElement(name = "THProfile", nillable = true)
+	protected List<ProfileDataTreasureHunt> thProfileData;
 	
 	public TopProfileTreasureHunt() {
-		profileData = new ArrayList<ProfileDataTreasureHunt>();
+		thProfileData = new ArrayList<ProfileDataTreasureHunt>();
 	}
 	/**
 	 * Добавить профиль в список
-	 * @param profile - объект профиля
+	 * @param thProfile - объект профиля
 	 */
-	public void add(ProfileDataTreasureHunt profile) {
-		profileData.add(profile);
+	public void add(ProfileDataTreasureHunt thProfile) {
+		thProfileData.add(thProfile);
 	}
 	/**
 	 * Профиль с именем, иконкой и количеством дней, которые он подряд собирал кристалики
 	 */
 	@XmlAccessorType(XmlAccessType.FIELD)
-	@XmlType(name = "profile", propOrder = {
+	@XmlType(name = "thprofile", propOrder = {
 		"iconindex",
 		"name",
 		"treasure",

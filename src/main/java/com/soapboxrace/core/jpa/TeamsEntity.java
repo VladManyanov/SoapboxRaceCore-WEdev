@@ -20,9 +20,10 @@ import javax.persistence.Table;
 @Entity
 @Table(name = "TEAMS")
 @NamedQueries({ //
-		@NamedQuery(name = "TeamsEntity.findByName", query = "SELECT obj FROM TeamsEntity obj WHERE obj.teamName = :teamName"),
-		@NamedQuery(name = "TeamsEntity.findAllTeams", query = "SELECT obj FROM TeamsEntity obj WHERE obj.active = true ORDER BY obj.teamPoints DESC"), //
-		@NamedQuery(name = "TeamsEntity.getRegionsTopTeam", query = "SELECT obj FROM TeamsEntity obj WHERE obj.active = true ORDER BY obj.regionsCount DESC, obj.teamPoints DESC") //
+	@NamedQuery(name = "TeamsEntity.findByName", query = "SELECT obj FROM TeamsEntity obj WHERE obj.teamName = :teamName"),
+	@NamedQuery(name = "TeamsEntity.findAllTeams", query = "SELECT obj FROM TeamsEntity obj WHERE obj.active = true ORDER BY obj.teamPoints DESC"), //
+	@NamedQuery(name = "TeamsEntity.findAllParticipatedTeams", query = "SELECT obj FROM TeamsEntity obj WHERE obj.active = true AND obj.teamPoints > 0 ORDER BY obj.teamPoints DESC"), //
+	@NamedQuery(name = "TeamsEntity.getRegionsTopTeam", query = "SELECT obj FROM TeamsEntity obj WHERE obj.active = true ORDER BY obj.regionsCount DESC, obj.teamPoints DESC") //
 })
 public class TeamsEntity {
 
@@ -38,6 +39,7 @@ public class TeamsEntity {
 	private String currentRank;
 	private int medals;
 	private int regionsCount;
+	private boolean previousWon;
 
 	@ManyToOne
 	@JoinColumn(name = "LEADERID", referencedColumnName = "ID", foreignKey = @ForeignKey(name = "TEAMS_PERSONA_FK"))
@@ -139,6 +141,14 @@ public class TeamsEntity {
 
 	public void setRegionsCount(int regionsCount) {
 		this.regionsCount = regionsCount;
+	}
+	
+	public boolean isPreviousWon() {
+		return previousWon;
+	}
+
+	public void setPreviousWon(boolean previousWon) {
+		this.previousWon = previousWon;
 	}
 
 }

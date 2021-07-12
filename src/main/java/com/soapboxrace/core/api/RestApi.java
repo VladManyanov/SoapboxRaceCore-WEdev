@@ -57,6 +57,20 @@ public class RestApi {
 	// ===================== Страницы =======================
 	
 	/**
+	 * Страница вывода основной статистики в едином запросе
+	 * @param onPage - сколько позиций вывести на странице (для суб-запросов)
+	 */
+	@GET
+	@Path("GetMainPageStats")
+	@Produces(MediaType.APPLICATION_XML)
+	public Response mainPageStats(@NotNull @QueryParam("onpage") int onpage, @QueryParam("token") String token) {
+		if (!apiTokenDAO.verifyToken(token, sr.getRemoteAddr())) {
+			String accessDenied = parameterBO.getStrParam("RESTAPI_FAILURELINK");
+			return Response.temporaryRedirect(URI.create(accessDenied)).build();
+		}
+		return Response.ok(bo.getMainPageStats(onpage)).build();
+	}
+	/**
 	 * Страница вывода топа по количеству очков
 	 * @param onPage - сколько позиций вывести на странице
 	 */
@@ -104,7 +118,7 @@ public class RestApi {
 	@GET
 	@Path("GetPopularRaces")
 	@Produces(MediaType.APPLICATION_XML)
-	public Response mostPupularRace(@NotNull @QueryParam("token") String token) {
+	public Response mostPopularRace(@NotNull @QueryParam("token") String token) {
 		if (!apiTokenDAO.verifyToken(token, sr.getRemoteAddr())) {
 			String accessDenied = parameterBO.getStrParam("RESTAPI_FAILURELINK");
 			return Response.temporaryRedirect(URI.create(accessDenied)).build();

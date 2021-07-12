@@ -65,6 +65,7 @@ import com.soapboxrace.jaxb.http.ArrayOfProfileIcon;
 import com.soapboxrace.jaxb.http.ArrayOfRaceWithTime;
 import com.soapboxrace.jaxb.http.ArrayOfServerInfo;
 import com.soapboxrace.jaxb.http.ChangePassword;
+import com.soapboxrace.jaxb.http.MainPageStats;
 import com.soapboxrace.jaxb.http.MostPopularRaces;
 import com.soapboxrace.jaxb.http.MostPopularRaces.Race;
 import com.soapboxrace.jaxb.http.PersonaBase;
@@ -208,6 +209,32 @@ public class RestApiBO {
 	
 	// ================= Функции выборки ================
 	
+	/**
+	 * Создаёт общий запрос для основных элементов статистики
+	 * @param onPage - Количество элементов в разделах статистики
+	 * @return MainPageStats
+	 */
+	public MainPageStats getMainPageStats(int onPage) {
+		if (onPage > 300) onPage = 300;
+		MainPageStats mainPageStats = new MainPageStats();
+		
+		TopProfileScore getTopScoresData = getTopScores(onPage);
+		TopProfileRaces getTopRacersData = getTopRacers(onPage);
+		TopProfileTreasureHunt TopProfileTreasureHuntData = TopProfileTreasureHunt(onPage);
+		MostPopularRaces MostPopularRacesData = MostPopularRaces();
+		ArrayOfCarClassHash getPopularCarClassData = getPopularCarClass(onPage);
+		ArrayOfProfileIcon getPopularProfileIconsData = getPopularProfileIcons(onPage);
+		ArrayOfCarNameTop getTopCarNameData = getTopCarName(onPage);
+		
+		mainPageStats.setTopProfileScoreData(getTopScoresData);
+		mainPageStats.setTopProfileRacesData(getTopRacersData);
+		mainPageStats.setTopProfileTreasureHuntData(TopProfileTreasureHuntData);
+		mainPageStats.setMostPopularRacesData(MostPopularRacesData);
+		mainPageStats.setArrayOfCarClassHashData(getPopularCarClassData);
+		mainPageStats.setArrayOfProfileIconData(getPopularProfileIconsData);
+		mainPageStats.setArrayOfCarNameTopData(getTopCarNameData);
+		return mainPageStats;
+	}
 	/**
 	 * Получает топ профилей по очкам
 	 * @param onPage - Из скольки профилей будет состоять топ

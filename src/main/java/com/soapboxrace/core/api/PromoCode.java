@@ -10,6 +10,8 @@ import javax.ws.rs.core.MediaType;
 import com.soapboxrace.core.bo.ParameterBO;
 import com.soapboxrace.core.bo.PromoCodeBO;
 import com.soapboxrace.core.bo.SalesBO;
+import com.soapboxrace.core.dao.PersonaDAO;
+import com.soapboxrace.core.jpa.PersonaEntity;
 
 @Path("/PromoCode")
 public class PromoCode {
@@ -22,6 +24,9 @@ public class PromoCode {
 	
 	@EJB
 	private SalesBO salesBO;
+	
+	@EJB
+	private PersonaDAO personaDAO;
 
 	@POST
 	@Path("/createPromoCode")
@@ -51,6 +56,16 @@ public class PromoCode {
 		}
 		return bo.usePromoCode(promoCode, email, password, nickname, token);
 	}
+	
+//	@POST
+//	@Path("/processDonateRequest")
+//	@Produces(MediaType.TEXT_HTML)
+//	public String processDonateRequest(@FormParam("optionType") String optionType, @FormParam("email") String currencyAmountStr, @FormParam("password") String transactionId, @FormParam("nickname") String nickname, @FormParam("token") String webToken) {
+//		// FIXME Доделать
+//		PersonaEntity personaEntity = personaDAO.findByNameIgnoreCase(nickname);
+//		float currencyAmount = Float.parseFloat(currencyAmountStr);
+//		return bo.processDonateRequest(currencyAmount, transactionId, personaEntity, optionType);
+//	}
 	
 	@POST
 	@Path("/useDebug")

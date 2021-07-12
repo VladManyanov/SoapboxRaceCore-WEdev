@@ -13,6 +13,7 @@ import org.apache.commons.codec.digest.DigestUtils;
 
 import com.soapboxrace.core.dao.AchievementRankDAO;
 import com.soapboxrace.core.dao.AchievementStateDAO;
+import com.soapboxrace.core.dao.DonateHistoryDAO;
 import com.soapboxrace.core.dao.PersonaDAO;
 import com.soapboxrace.core.dao.ProductDAO;
 import com.soapboxrace.core.dao.PromoCodeDAO;
@@ -20,6 +21,7 @@ import com.soapboxrace.core.dao.SalesDAO;
 import com.soapboxrace.core.dao.UserDAO;
 import com.soapboxrace.core.jpa.AchievementRankEntity;
 import com.soapboxrace.core.jpa.AchievementStateEntity;
+import com.soapboxrace.core.jpa.DonateHistoryEntity;
 import com.soapboxrace.core.jpa.PersonaEntity;
 import com.soapboxrace.core.jpa.PromoCodeEntity;
 import com.soapboxrace.core.jpa.UserEntity;
@@ -61,6 +63,9 @@ public class PromoCodeBO {
 	@EJB
 	private CommerceBO commerceBO;
 
+	@EJB
+	private DonateHistoryDAO donateHistoryDAO;
+	
 	@Resource(mappedName = "java:jboss/mail/Gmail")
 	private Session mailSession;
 
@@ -114,7 +119,32 @@ public class PromoCodeBO {
 		if (token != null) {
 			userEntity = personaEntity.getUser();
 		}
+		// TODO Additional promo-codes functional
+		return premiumActivation(nickname, promoCodeEntity, personaEntity, userEntity);
+	}
+	
+	public String processDonateRequest(float currencyAmount, String transactionId, PersonaEntity personaEntity, String optionType) {
+		DonateHistoryEntity donateHistoryEntity = new DonateHistoryEntity();
+		donateHistoryEntity.setCurrencyAmount(currencyAmount);
+		donateHistoryEntity.setTransactionId(transactionId);
+		donateHistoryEntity.setDate(LocalDateTime.now());
+		donateHistoryEntity.setPersona(personaEntity); 
+		donateHistoryEntity.setUser(personaEntity.getUser());
+		donateHistoryEntity.setOptionType(optionType);
+		donateHistoryDAO.insert(donateHistoryEntity);
 		
+		String promoCode = "WE-" + (Long.toHexString(Double.doubleToLongBits(Math.random()))).toUpperCase();
+		PromoCodeEntity promoCodeEntity = new PromoCodeEntity();
+		promoCodeEntity.setIsUsed(false);
+		promoCodeEntity.setPromoCode(promoCode);
+		promoCodeEntity.setCodeType(optionType);
+		promoCodeDao.insert(promoCodeEntity);
+		
+		premiumActivation(personaEntity.getName(), promoCodeEntity, personaEntity, personaEntity.getUser());
+		return "ok";
+	}
+	
+	public String premiumActivation(String nickname, PromoCodeEntity promoCodeEntity, PersonaEntity personaEntity, UserEntity userEntity) {
 		String premiumCodeType = promoCodeEntity.getCodeType();
 		int maxCashLimit = parameterBO.getMaxCash();
 		int sbConvAmount = parameterBO.getIntParam("BOOST_CONVERT_AMOUNT");

@@ -1,5 +1,7 @@
 package com.soapboxrace.core.jpa;
 
+import java.time.LocalDateTime;
+
 import javax.persistence.Entity;
 import javax.persistence.ForeignKey;
 import javax.persistence.GeneratedValue;
@@ -14,7 +16,12 @@ import javax.persistence.Table;
 @Entity
 @Table(name = "TEAMS_TOKENS")
 @NamedQueries({ //
-	@NamedQuery(name = "TeamsTokensEntity.findByAffectedEventId", query = "SELECT obj FROM TeamsTokensEntity obj WHERE obj.tokenValue2 = :tokenValue2 AND obj.activated = true") //
+	@NamedQuery(name = "TeamsTokensEntity.findByAffectedEventId", query = "SELECT obj FROM TeamsTokensEntity obj WHERE obj.tokenValue2 = :tokenValue2 AND obj.activated = true"), //
+	@NamedQuery(name = "TeamsTokensEntity.findAllByTeam", query = "SELECT obj FROM TeamsTokensEntity obj WHERE obj.activated = true AND obj.teamOwner = :teamOwner"), //
+	
+	@NamedQuery(name = "TeamsTokensEntity.lookForIncomeToken", query = "SELECT obj FROM TeamsTokensEntity obj WHERE obj.activated = true AND obj.tokenType = 'INCOME' AND obj.teamOwner = :teamOwner"), //
+	@NamedQuery(name = "TeamsTokensEntity.lookForTHKeeperToken", query = "SELECT obj FROM TeamsTokensEntity obj WHERE obj.activated = true AND obj.tokenType = 'TREASURE_KEEPER' AND obj.teamOwner = :teamOwner"), //
+	@NamedQuery(name = "TeamsTokensEntity.lookForNeutralZoneToken", query = "SELECT obj FROM TeamsTokensEntity obj WHERE obj.activated = true AND obj.tokenType = 'NEUTRAL_ZONE' AND obj.tokenValue2 = :tokenValue2") //
 })
 public class TeamsTokensEntity {
 	
@@ -28,6 +35,7 @@ public class TeamsTokensEntity {
 	
 	private String tokenType;
 	private boolean activated;
+	private LocalDateTime activationDate;
 	
 	private int tokenValue; // Token effect value
 	private int tokenValue2; // Event ID, if token should be applied for specific event
@@ -78,6 +86,14 @@ public class TeamsTokensEntity {
 
 	public void setTokenValue2(int tokenValue2) {
 		this.tokenValue2 = tokenValue2;
+	}
+	
+	public LocalDateTime getActivationDate() {
+		return activationDate;
+	}
+
+	public void setActivationDate(LocalDateTime activationDate) {
+		this.activationDate = activationDate;
 	}
 
 }

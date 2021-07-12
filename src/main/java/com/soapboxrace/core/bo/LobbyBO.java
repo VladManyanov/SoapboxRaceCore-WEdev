@@ -13,6 +13,7 @@ import com.soapboxrace.core.dao.EventSessionDAO;
 import com.soapboxrace.core.dao.LobbyDAO;
 import com.soapboxrace.core.dao.LobbyEntrantDAO;
 import com.soapboxrace.core.dao.PersonaDAO;
+import com.soapboxrace.core.dao.PersonaPresenceDAO;
 import com.soapboxrace.core.dao.TeamsDAO;
 import com.soapboxrace.core.dao.TokenSessionDAO;
 import com.soapboxrace.core.jpa.EventEntity;
@@ -86,6 +87,9 @@ public class LobbyBO {
 	
 	@EJB
 	private LobbyKeepAliveBO lobbyKeepAliveBO;
+	
+	@EJB
+	private PersonaPresenceDAO personaPresenceDAO;
 		
 	public void joinFastLobby(Long personaId, int carClassHash, int raceFilter, boolean isSClassFilterActive, int searchStage) {
         // System.out.println("MM START Time: " + LocalDateTime.now());
@@ -129,7 +133,7 @@ public class LobbyBO {
 
 	public void joinQueueEvent(Long personaId, int eventId, int carClassHash) {
 		PersonaEntity personaEntity = personaDao.findById(personaId);
-		List<LobbyEntity> lobbys = lobbyDao.findByEventStarted(eventId);
+		List<LobbyEntity> lobbys = lobbyDao.findByEventStarted(eventId, personaId);
 		
 		if (lobbys.isEmpty()) {
 			createLobby(personaEntity, eventId, false, false, carClassHash);
@@ -480,5 +484,16 @@ public class LobbyBO {
 			lobbysNew = lobbys;
 		}
 		return lobbysNew;
+	}
+	
+	public void preparePlayerForFreeroam(Long activePersonaId, String securityToken) {
+		personaPresenceDAO.updateCurrentEventPost(activePersonaId, null, 0, null, false);
+		matchmakingBO.resetIgnoredEvents(activePersonaId);
+		matchmakingBO.removePlayerFromQueue(activePersonaId); // Game doesn't stop the queue when entering into garage
+		tokenSessionBO.resetRaceNow(securityToken);
+		LobbyEntity weirdLeftoverLobby = lobbyDao.findByHosterPersona(activePersonaId);
+		if (weirdLeftoverLobby != null) {
+			lobbyCountdownBO.shutdownLobby(weirdLeftoverLobby);
+		}
 	}
 }

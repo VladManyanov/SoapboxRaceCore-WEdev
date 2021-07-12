@@ -13,13 +13,13 @@ import javax.ws.rs.core.MediaType;
 import com.soapboxrace.core.api.util.Secured;
 import com.soapboxrace.core.bo.EventBO;
 import com.soapboxrace.core.bo.EventsBO;
+import com.soapboxrace.core.bo.LobbyBO;
 import com.soapboxrace.core.bo.MatchmakingBO;
 import com.soapboxrace.core.bo.ParameterBO;
 import com.soapboxrace.core.bo.PersonaBO;
 import com.soapboxrace.core.bo.TokenSessionBO;
 import com.soapboxrace.core.bo.util.EventModeType;
 import com.soapboxrace.core.dao.CarClassesDAO;
-import com.soapboxrace.core.dao.PersonaPresenceDAO;
 import com.soapboxrace.core.jpa.CarClassesEntity;
 import com.soapboxrace.core.jpa.EventEntity;
 import com.soapboxrace.jaxb.http.ArrayOfEventDefinition;
@@ -50,13 +50,13 @@ public class Events {
 	private PersonaBO personaBO;
 	
 	@EJB
-	private PersonaPresenceDAO personaPresenceDAO;
-	
-	@EJB
 	private CarClassesDAO carClassesDAO;
 	
 	@EJB
 	private MatchmakingBO matchmakingBO;
+	
+	@EJB
+	private LobbyBO lobbyBO;
 
 	@GET
 	@Path("/availableatlevel")
@@ -64,9 +64,8 @@ public class Events {
 	public EventsPacket availableAtLevel(@HeaderParam("securityToken") String securityToken) {
 		Long activePersonaId = tokenSessionBO.getActivePersonaId(securityToken);
 		boolean seqCSeries = tokenSessionBO.getUser(securityToken).getIsSeqDailySeries();
-		personaPresenceDAO.updateCurrentEventPost(activePersonaId, null, 0, null, false);
-		matchmakingBO.resetIgnoredEvents(activePersonaId);
-		tokenSessionBO.resetRaceNow(securityToken);
+		lobbyBO.preparePlayerForFreeroam(activePersonaId, securityToken);
+		
 		OwnedCarTrans defaultCar = personaBO.getDefaultCar(activePersonaId);
 		CustomCarTrans customCarTrans = defaultCar.getCustomCar();
 		int carClassHash = customCarTrans.getCarClassHash();

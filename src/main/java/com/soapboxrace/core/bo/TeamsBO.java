@@ -15,20 +15,32 @@ import javax.mail.Session;
 import org.apache.commons.codec.digest.DigestUtils;
 
 import com.soapboxrace.core.bo.util.DiscordWebhook;
+import com.soapboxrace.core.bo.util.TeamTokenType;
 import com.soapboxrace.core.bo.util.TimeReadConverter;
 import com.soapboxrace.core.dao.CarClassesDAO;
 import com.soapboxrace.core.dao.CustomCarDAO;
 import com.soapboxrace.core.dao.EventDataDAO;
 import com.soapboxrace.core.dao.EventSessionDAO;
+import com.soapboxrace.core.dao.ParameterDAO;
 import com.soapboxrace.core.dao.PersonaDAO;
 import com.soapboxrace.core.dao.TeamsDAO;
+import com.soapboxrace.core.dao.TeamsHistoryDAO;
+import com.soapboxrace.core.dao.TeamsMapEventsDAO;
+import com.soapboxrace.core.dao.TeamsRegionsDAO;
+import com.soapboxrace.core.dao.TeamsTokensDAO;
 import com.soapboxrace.core.dao.UserDAO;
 import com.soapboxrace.core.jpa.EventDataEntity;
+import com.soapboxrace.core.jpa.EventEntity;
 import com.soapboxrace.core.jpa.EventSessionEntity;
 import com.soapboxrace.core.jpa.LobbyEntity;
 import com.soapboxrace.core.jpa.LobbyEntrantEntity;
+import com.soapboxrace.core.jpa.ParameterEntity;
 import com.soapboxrace.core.jpa.PersonaEntity;
 import com.soapboxrace.core.jpa.TeamsEntity;
+import com.soapboxrace.core.jpa.TeamsHistoryEntity;
+import com.soapboxrace.core.jpa.TeamsMapEventsEntity;
+import com.soapboxrace.core.jpa.TeamsRegionsEntity;
+import com.soapboxrace.core.jpa.TeamsTokensEntity;
 import com.soapboxrace.core.jpa.UserEntity;
 import com.soapboxrace.core.xmpp.OpenFireSoapBoxCli;
 import com.soapboxrace.core.xmpp.XmppChat;
@@ -75,6 +87,21 @@ public class TeamsBO {
 	
 	@EJB
 	private CustomCarDAO customCarDAO;
+	
+	@EJB
+	private TeamsMapEventsDAO teamsMapEventsDAO;
+	
+	@EJB
+	private TeamsTokensDAO teamsTokensDAO;
+	
+	@EJB
+	private ParameterDAO parameterDAO;
+	
+	@EJB
+	private TeamsHistoryDAO teamsHistoryDAO;
+	
+	@EJB
+	private TeamsRegionsDAO teamsRegionsDAO;
 	
 	@EJB
 	private TimeReadConverter timeReadConverter;
@@ -225,6 +252,8 @@ public class TeamsBO {
 								}	
 								winnerTeamName = racerTeamEntity.getTeamName();
 								racerTeamEntity.setTeamPoints(racerTeamEntity.getTeamPoints() + 1);
+								racerTeamEntity.setPreviousWon(true);
+								// assignRegionOwnership(racerTeamEntity, eventSessionEntity.getEvent());
 								winnerTeamPoints = racerTeamEntity.getTeamPoints();
 								eventName = eventSessionEntity.getEvent().getName();
 								teamsDao.update(racerTeamEntity);
@@ -295,6 +324,105 @@ public class TeamsBO {
 		teamsEntity.setOpenEntry(openEntryValue);
 		teamsDao.update(teamsEntity);
 		System.out.println("team changed their entry rule");
+	}
+	
+	// Determine the points reward for winner team
+	public void pointsRaceAccolades(TeamsEntity teamsEntity, EventEntity eventEntity) {
+		String tokenType = ""; // TODO Enum for Token types
+		boolean isThatTokenOurs = false;
+		int finalPointsValue = 0;
+		finalPointsValue = 2; // Default reward
+		
+		TeamsMapEventsEntity teamsMapEventsEntity = teamsMapEventsDAO.findByEventId(eventEntity.getId());
+		TeamsRegionsEntity teamsRegionsEntity = teamsMapEventsEntity.getRegion();
+		TeamsTokensEntity eventTokenEntity = teamsTokensDAO.findByAffectedEventId(eventEntity.getId());
+		if (eventTokenEntity != null) {
+			tokenType = eventTokenEntity.getTokenType();
+			if (eventTokenEntity.getTeamOwner().equals(teamsEntity)) {
+				isThatTokenOurs = true;
+			}
+		}
+		
+		// Token-based rewards
+		if (teamsMapEventsEntity.getForceVehicleHash() != 0 && tokenType.contentEquals(TeamTokenType.WHITELIST.toString())) {
+			if (isThatTokenOurs) {
+				finalPointsValue = finalPointsValue + 10; // White-List token bonus (Team which owns the Token)
+			}
+			else {
+				finalPointsValue = finalPointsValue + 1; // White-List token bonus
+			}
+		}
+		if (tokenType.contentEquals(TeamTokenType.AIRDROP.toString())) {
+			if (isThatTokenOurs) {
+				finalPointsValue = finalPointsValue + 10; // Air Drop token bonus (Team which owns the Token)
+			}
+			else {
+				finalPointsValue = finalPointsValue + 5; // Air Drop token bonus (Team which NOT owns the Token)
+			}
+		}
+		if (teamsTokensDAO.lookForIncomeToken(teamsEntity) != null) {
+			if (teamsEntity.isPreviousWon()) {
+				finalPointsValue = finalPointsValue + 1; // Income token bonus
+				teamsEntity.setPreviousWon(false);
+			}
+		}
+		// TODO Lucky Clever - If Team has failed on race, bonus will be applied anyway
+		// TODO Fail Tax - If Team has failed on race, opponent Team will get a bonus
+		
+		// Basic rewards
+		if (teamsRegionsEntity.getStartBonus()) {
+			finalPointsValue = finalPointsValue + 3; // Start zone bonus
+		}
+		if (teamsRegionsEntity.getTeamOwner() != null) {
+			finalPointsValue = finalPointsValue + 1; // Opponent zone winning bonus
+		}
+		if (!isTerritoryActive(teamsRegionsEntity)) {
+			finalPointsValue = finalPointsValue + 2; // Low-activity zone bonus
+		}
+		if (eventEntity.getTrackLength() > 16) {
+			finalPointsValue = finalPointsValue + 2; // Event track length bonus
+		}
+		// TODO If territory is taken by 50% or more by single Team (not fully taken), the races which still not taken will give a bonus
+		// TODO If the winner Team rating is really lower than opponent Team, winner Team will get bonus
+		
+		teamsEntity.setTeamPoints(teamsEntity.getTeamPoints() + finalPointsValue);
+	}
+	
+	// Determine the points reward for Team (Treasure Hunt)
+	public void pointsTHuntAccolades(TeamsEntity teamsEntity) {
+		int finalPointsValue = 0;
+		finalPointsValue = 1; // Default TH reward
+		
+		if (teamsTokensDAO.lookForTHKeeperToken(teamsEntity) != null) {
+			finalPointsValue = finalPointsValue + 1; // Treasure Keeper bonus
+		}
+		// TODO Lord of the Diamonds - If entire Team finishes THunt on 24 hours, Team will get bonus (3 * players count).
+		
+		teamsEntity.setTeamPoints(teamsEntity.getTeamPoints() + finalPointsValue);
+	}
+	
+	// Check if that zone is active (in terms of races)
+	public boolean isTerritoryActive(TeamsRegionsEntity teamsRegionsEntity) {
+		return true; // TODO Do it
+	}
+	
+	// Territory-related actions
+	public void assignRegionOwnership(TeamsEntity teamsEntity, EventEntity eventEntity) {
+		TeamsMapEventsEntity teamsMapEventsEntity = teamsMapEventsDAO.findByEventId(eventEntity.getId());
+		TeamsRegionsEntity teamsRegionsEntity = teamsMapEventsEntity.getRegion();
+		
+		if (teamsTokensDAO.lookForNeutralZoneToken(teamsRegionsEntity.getRegionId()) != null) {
+			return; // Neutral Zone - can't change region status when token is applied
+		}
+		teamsMapEventsEntity.setTeamWinner(teamsEntity);
+		teamsMapEventsDAO.update(teamsMapEventsEntity);
+		
+		// Note: Region must have at least 1 race to work properly
+		if (teamsMapEventsDAO.isRegionEventsUnderTeamControl(teamsRegionsEntity, teamsEntity)) {
+			teamsRegionsEntity.setTeamPrevOwner(teamsRegionsEntity.getTeamOwner());
+			teamsRegionsEntity.setTeamOwner(teamsEntity);
+			teamsRegionsDAO.update(teamsRegionsEntity);
+		}
 	}
 	
 	public String teamCreate(String teamName, String leaderName, boolean openEntry) {
@@ -419,7 +547,7 @@ public class TeamsBO {
 	}
 	
 	// Teams should participate on the allowed cars
-	public boolean isPlayerCarAllowed (int physicsProfileHash) {
+	public boolean isPlayerCarAllowed(int physicsProfileHash) {
 		String[] carsArray = parameterBO.getStrParam("TEAM_ALLOWEDCARS").split(",");
 		String playerCarTag = carClassesDAO.findByHash(physicsProfileHash).getStoreName();
 		List<String> carsStrArray = new ArrayList<String>();
@@ -428,6 +556,37 @@ public class TeamsBO {
 			return true;
 		}
 		return false;
+	}
+	
+	// Start or disable the Team Racing season
+	public String executeSeasonChange(ParameterEntity curSeasonValue, boolean startSeasonChoose) {
+		ParameterEntity prevSeasonValue = parameterDAO.findById("TEAM_PREVIOUSSEASON");
+		String endText = "!plsfix!";
+		if (startSeasonChoose) { // Start
+			int currentSeasonNew = Integer.parseInt(prevSeasonValue.getValue()) + 1;
+			curSeasonValue.setValue(String.valueOf(currentSeasonNew));
+			parameterDAO.update(curSeasonValue);
+			endText = "DONE: Season " + currentSeasonNew + " has been started";
+			// TODO Additional Team Tokens for low-rating teams
+		}
+		else { // Close
+			int currentSeasonInt = Integer.parseInt(curSeasonValue.getValue());
+			prevSeasonValue.setValue(String.valueOf((Integer.parseInt(prevSeasonValue.getValue()) + 1)));
+			curSeasonValue.setValue("0"); // 0 means that Team Racing is unactive
+			parameterDAO.update(curSeasonValue);
+			parameterDAO.update(prevSeasonValue);
+			
+			List<TeamsEntity> participatedTeams = teamsDao.findAllParticipatedTeams();
+			for (TeamsEntity team : participatedTeams) { // Save the season results
+				TeamsHistoryEntity teamsHistoryEntity = new TeamsHistoryEntity();
+				teamsHistoryEntity.setSeason(currentSeasonInt);
+				teamsHistoryEntity.setPoints(team.getTeamPoints());
+				teamsHistoryEntity.setTeam(team);
+				teamsHistoryDAO.insert(teamsHistoryEntity);
+			}
+			endText = "DONE: Season " + currentSeasonInt + " has been closed";
+		}
+		return endText;
 	}
 
 	private UserEntity checkLogin(String email, String password) {

@@ -52,4 +52,9 @@ public class TeamsDAO extends BaseDAO<TeamsEntity> {
 		List<TeamsEntity> resultList = query.getResultList();
 		return !resultList.isEmpty() ? resultList.get(0) : null;
 	}
+	
+	public List<TeamsEntity> findAllParticipatedTeams() {
+		TypedQuery<TeamsEntity> query = entityManager.createNamedQuery("TeamsEntity.findAllParticipatedTeams", TeamsEntity.class);
+		return query.getResultList();
+	}
 }

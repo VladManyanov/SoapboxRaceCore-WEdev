@@ -118,6 +118,10 @@ public class LegitRaceBO {
 			raceIssues = true;
 			openFireSoapBoxCli.send(XmppChat.createSystemMessage("### Your game session is too long to save a record, restart the game."), personaId);
 		}
+		if (!raceIssues && personaEntity.getUser().getFRSyncAlt()) { // Disable records when using alt-sync (Weird time-related game engine bugs)
+			raceIssues = true;
+			openFireSoapBoxCli.send(XmppChat.createSystemMessage("### Records is restricted when Alt-Sync is activated."), personaId);
+		}
 		if (!raceIssues && eventEntity.getMinTime() >= raceTime) { // Race minimal time-limit
 			raceIssues = true;
 			openFireSoapBoxCli.send(XmppChat.createSystemMessage("### Minimal race time limit, record will be not saved."), personaId);

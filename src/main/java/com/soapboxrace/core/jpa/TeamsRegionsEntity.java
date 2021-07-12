@@ -1,5 +1,7 @@
 package com.soapboxrace.core.jpa;
 
+import java.util.List;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.ForeignKey;
@@ -10,6 +12,7 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
+import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
 @Entity
@@ -32,6 +35,9 @@ public class TeamsRegionsEntity {
 	@ManyToOne
 	@JoinColumn(name = "TEAMPREVOWNERID", referencedColumnName = "ID", foreignKey = @ForeignKey(name = "TEAMS_REGIONS_FK_1"))
 	private TeamsEntity teamPrevOwner;
+	
+	@OneToMany(mappedBy = "region", targetEntity = TeamsMapEventsEntity.class)
+	private List<TeamsMapEventsEntity> listOfEvents;
 	
 	private boolean startBonus;
 	private float activity;
@@ -60,6 +66,10 @@ public class TeamsRegionsEntity {
 
 	public void setTeamOwner(TeamsEntity teamOwner) {
 		this.teamOwner = teamOwner;
+	}
+	
+	public List<TeamsMapEventsEntity> getListOfEvents() {
+		return listOfEvents;
 	}
 
 	public TeamsEntity getTeamPrevOwner() {

@@ -57,6 +57,9 @@ public class EventsBO {
 	private OpenFireSoapBoxCli openFireSoapBoxCli;
 	
 	@EJB
+	private TeamsBO teamsBO;
+	
+	@EJB
 	private DiscordWebhook discordBot;
 
 	public TreasureHuntEventSession getTreasureHuntEventSession(Long activePersonaId) {
@@ -129,6 +132,7 @@ public class EventsBO {
 			TeamsEntity racerTeamEntity = playerEntity.getTeam();
 			if (racerTeamEntity != null && racerTeamEntity.getActive() && parameterBO.getIntParam("TEAM_CURRENTSEASON") > 0) {
 				racerTeamEntity.setTeamPoints(racerTeamEntity.getTeamPoints() + 1);
+				// teamsBO.pointsTHuntAccolades(racerTeamEntity);
 				int winnerTeamPointsFinal = racerTeamEntity.getTeamPoints();
 				String winnerPlayerName = playerEntity.getName();
 				String winnerTeamName = racerTeamEntity.getTeamName();

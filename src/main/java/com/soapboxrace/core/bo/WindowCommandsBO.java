@@ -362,49 +362,49 @@ public class WindowCommandsBO {
 			return null;
 		}
 		// Invite another Team for Team Match
-		if (displayName.startsWith("/TEAMMATCH ")) {
-			if (personaSender.getTeam() == null) {
-				openFireSoapBoxCli.send(XmppChat.createSystemMessage("### You cannot start Team Match without a Team."), personaId);
-				return null;
-			}
-			String secondTeamName = displayName.replaceFirst("/TEAMMATCH ", "");
-			TeamsEntity secondTeam = teamsDAO.findByName(secondTeamName);
-			if (secondTeam == null) {
-				openFireSoapBoxCli.send(XmppChat.createSystemMessage("### Wrong Team name."), personaId);
-				return null;
-			}
-			// Добавить проверку на другие инвайты этой же команды на матч
-			TeamsMatchesEntity teamsMatchesEntity = new TeamsMatchesEntity();
-			teamsMatchesEntity.setTeam1(personaSender.getTeam());
-			teamsMatchesEntity.setTeam2(secondTeam);
-			teamsMatchesEntity.setCreationDate(LocalDateTime.now());
-			// Ввод фильтров матча по классу и бонусам
-			teamsMatchesEntity.setForceClassHash(0);
-			teamsMatchesEntity.setForcePowerups(true);
-			teamsMatchesDAO.insert(teamsMatchesEntity);
+//		if (displayName.startsWith("/TEAMMATCH ")) {
+//			if (personaSender.getTeam() == null) {
+//				openFireSoapBoxCli.send(XmppChat.createSystemMessage("### You cannot start Team Match without a Team."), personaId);
+//				return null;
+//			}
+//			String secondTeamName = displayName.replaceFirst("/TEAMMATCH ", "");
+//			TeamsEntity secondTeam = teamsDAO.findByName(secondTeamName);
+//			if (secondTeam == null) {
+//				openFireSoapBoxCli.send(XmppChat.createSystemMessage("### Wrong Team name."), personaId);
+//				return null;
+//			}
+//			// Добавить проверку на другие инвайты этой же команды на матч
+//			TeamsMatchesEntity teamsMatchesEntity = new TeamsMatchesEntity();
+//			teamsMatchesEntity.setTeam1(personaSender.getTeam());
+//			teamsMatchesEntity.setTeam2(secondTeam);
+//			teamsMatchesEntity.setCreationDate(LocalDateTime.now());
+//			// Ввод фильтров матча по классу и бонусам
+//			teamsMatchesEntity.setForceClassHash(0);
+//			teamsMatchesEntity.setForcePowerups(true);
+//			teamsMatchesDAO.insert(teamsMatchesEntity);
 			
-			openFireSoapBoxCli.send(XmppChat.createSystemMessage("### Team " + secondTeamName + " has been invited to Team Match."), personaId);
-			return null;
-		}
-		// Check if other Team has invited your Team for Team Match
-		if (displayName.contentEquals("/TEAMMATCHJOIN")) {
-			if (personaSender.getTeam() == null) {
-				openFireSoapBoxCli.send(XmppChat.createSystemMessage("### You cannot participate on Team Match without a Team."), personaId);
-				return null;
-			}
-			// Добавить отображение инвайтов для команды, если их несколько
-			List<TeamsMatchesEntity> teamsMatchesInvites = teamsMatchesDAO.findInvitesByTeam(personaSender.getTeam());
-			if (!teamsMatchesInvites.isEmpty()) {
-				TeamsMatchesEntity teamsMatchesEntity = teamsMatchesInvites.get(0);
-				teamsMatchesEntity.setAccepted(true);
-				teamsMatchesEntity.setEventId1(0);
-				teamsMatchesEntity.setEventId2(0);
-				teamsMatchesEntity.setEventId3(0);
-				teamsMatchesDAO.update(teamsMatchesEntity);
-				openFireSoapBoxCli.send(XmppChat.createSystemMessage("### Team Match invite against " + teamsMatchesEntity.getTeam1().getTeamName() + " team has been accepted."), personaId);
-			}
-			return null;
-		}
+//			openFireSoapBoxCli.send(XmppChat.createSystemMessage("### Team " + secondTeamName + " has been invited to Team Match."), personaId);
+//			return null;
+//		}
+//		// Check if other Team has invited your Team for Team Match
+//		if (displayName.contentEquals("/TEAMMATCHJOIN")) {
+//			if (personaSender.getTeam() == null) {
+//				openFireSoapBoxCli.send(XmppChat.createSystemMessage("### You cannot participate on Team Match without a Team."), personaId);
+//				return null;
+//			}
+//			// Добавить отображение инвайтов для команды, если их несколько
+//			List<TeamsMatchesEntity> teamsMatchesInvites = teamsMatchesDAO.findInvitesByTeam(personaSender.getTeam());
+//			if (!teamsMatchesInvites.isEmpty()) {
+//				TeamsMatchesEntity teamsMatchesEntity = teamsMatchesInvites.get(0);
+//				teamsMatchesEntity.setAccepted(true);
+//				teamsMatchesEntity.setEventId1(0);
+//				teamsMatchesEntity.setEventId2(0);
+//				teamsMatchesEntity.setEventId3(0);
+//				teamsMatchesDAO.update(teamsMatchesEntity);
+//				openFireSoapBoxCli.send(XmppChat.createSystemMessage("### Team Match invite against " + teamsMatchesEntity.getTeam1().getTeamName() + " team has been accepted."), personaId);
+//			}
+//			return null;
+//		}
 		return null;
 	}
 }

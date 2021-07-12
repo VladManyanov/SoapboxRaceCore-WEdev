@@ -157,13 +157,14 @@ public class LobbyDAO extends BaseDAO<LobbyEntity> {
 	}
 
 	// Search for event selected on World Map
-	public List<LobbyEntity> findByEventStarted(int eventId) {
+	public List<LobbyEntity> findByEventStarted(int eventId, Long personaId) {
 		Date dateNow = new Date();
 		Date datePast = new Date(dateNow.getTime() - (parameterBO.getIntParam("LOBBY_TIME") - 8000)); // Don't count the last 8 seconds of lobby life-time
 		EventEntity eventEntity = new EventEntity();
 		eventEntity.setId(eventId);
 
 		TypedQuery<LobbyEntity> query = entityManager.createNamedQuery("LobbyEntity.findByEventStarted", LobbyEntity.class);
+		query.setParameter("personaId", personaId); // We should avoid the lobbies which created by player himself (for any reason...)
 		query.setParameter("event", eventEntity);
 		query.setParameter("dateTime1", datePast);
 		query.setParameter("dateTime2", dateNow);

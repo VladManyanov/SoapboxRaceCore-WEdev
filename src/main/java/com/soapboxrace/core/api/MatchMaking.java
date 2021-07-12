@@ -124,6 +124,12 @@ public class MatchMaking {
 			openFireSoapBoxCli.send(XmppChat.createSystemMessage("### You cannot join to racing on this vehicle."), activePersonaId);
 			throw new EngineException(EngineExceptionCode.GameLocked, false);
 		}
+		LobbyEntity playerLobby = lobbyDAO.findByHosterPersona(activePersonaId);
+		if (playerLobby != null) {
+			openFireSoapBoxCli.send(XmppChat.createSystemMessage("### You already have a lobby started..."), activePersonaId);
+			lobbyCountdownBO.shutdownLobby(playerLobby);
+			throw new EngineException(EngineExceptionCode.GameLocked, false);
+		}
 		else {
 			lobbyBO.joinFastLobby(activePersonaId, playerCarClass, customCar.getRaceFilter(), isSClassFilterActive, 1);
 		}

@@ -13,14 +13,14 @@ import com.soapboxrace.core.jpa.TeamsMapEventsEntity;
 import com.soapboxrace.core.jpa.TeamsRegionsEntity;
 
 @Stateless
-public class TeamsMapEventsDAO extends BaseDAO<TeamsEntity> {
+public class TeamsMapEventsDAO extends BaseDAO<TeamsMapEventsEntity> {
 
 	@PersistenceContext
 	protected void setEntityManager(EntityManager entityManager) {
 		this.entityManager = entityManager;
 	}
 
-	public TeamsMapEventsEntity findByEventId(Long id) {
+	public TeamsMapEventsEntity findByEventId(int id) {
 		return entityManager.find(TeamsMapEventsEntity.class, id);
 	}
 	
@@ -28,5 +28,12 @@ public class TeamsMapEventsDAO extends BaseDAO<TeamsEntity> {
 		TypedQuery<TeamsMapEventsEntity> query = entityManager.createNamedQuery("TeamsMapEventsEntity.findByRegion", TeamsMapEventsEntity.class);
 		query.setParameter("region", teamsRegionsEntity);
 		return query.getResultList();
+	}
+	
+	public boolean isRegionEventsUnderTeamControl(TeamsRegionsEntity teamsRegionsEntity, TeamsEntity teamsEntity) {
+		TypedQuery<TeamsMapEventsEntity> query = entityManager.createNamedQuery("TeamsMapEventsEntity.getRegionEventsWithoutTeamControl", TeamsMapEventsEntity.class);
+		query.setParameter("region", teamsRegionsEntity);
+		query.setParameter("teamWinner", teamsEntity);
+		return query.getResultList().isEmpty() ? true : false;
 	}
 }

@@ -9,6 +9,8 @@ import javax.ws.rs.core.MediaType;
 
 import com.soapboxrace.core.bo.ParameterBO;
 import com.soapboxrace.core.bo.TeamsBO;
+import com.soapboxrace.core.dao.ParameterDAO;
+import com.soapboxrace.core.jpa.ParameterEntity;
 
 @Path("/Teams")
 public class Teams {
@@ -18,8 +20,11 @@ public class Teams {
 
 	@EJB
 	private ParameterBO parameterBO;
+	
+	@EJB
+	private ParameterDAO parameterDAO;
 
-	// WEv2 Teams Test - Hypercycle
+	// TODO Web-based Teams join & management
 	@POST
 	@Path("/teamJoin")
 	@Produces(MediaType.TEXT_HTML)
@@ -40,7 +45,28 @@ public class Teams {
 		if (teamName.isEmpty() || leaderName.isEmpty()) {
 			return "ERROR: empty team name or team leader";
 		}
-		return "ERROR: invalid token (not a team manager? quit right now)";
+		return "ERROR: invalid token (not a server staff? quit right now)";
+	}
+	
+	@POST
+	@Path("/toggleSeason")
+	@Produces(MediaType.TEXT_HTML)
+	public String toggleSeasonAdmin(@FormParam("teamModerationToken") String teamModerationToken, @FormParam("startSeasonChoose") boolean startSeasonChoose) {
+		ParameterEntity curSeasonValue = parameterDAO.findById("TEAM_CURRENTSEASON");
+		int currentSeason = Integer.parseInt(curSeasonValue.getValue());
+		if (startSeasonChoose && currentSeason == 0) { // Start the new season
+			return bo.executeSeasonChange(curSeasonValue, startSeasonChoose);
+		}
+		if (startSeasonChoose && currentSeason != 0) { // Can't start season if it's already started
+			return "ERROR: Team Racing season is already active";
+		}
+		if (!startSeasonChoose && currentSeason != 0) { // Close current active season
+			return bo.executeSeasonChange(curSeasonValue, startSeasonChoose);
+		}
+		if (!startSeasonChoose && currentSeason == 0) { // Can't close season if season is not active at all
+			return "ERROR: Team Racing season is not active";
+		}
+		return "ERROR: invalid token (not a server staff? quit right now)";
 	}
 	
 //	@POST

@@ -12,7 +12,8 @@ import javax.persistence.Table;
 @Entity
 @Table(name = "TEAMS_MAPEVENTS")
 @NamedQueries({ //
-		@NamedQuery(name = "TeamsMapEventsEntity.findByRegion", query = "SELECT obj FROM TeamsMapEventsEntity obj WHERE obj.region = :region") //
+		@NamedQuery(name = "TeamsMapEventsEntity.findByRegion", query = "SELECT obj FROM TeamsMapEventsEntity obj WHERE obj.region = :region"), //
+		@NamedQuery(name = "TeamsMapEventsEntity.getRegionEventsWithoutTeamControl", query = "SELECT obj FROM TeamsMapEventsEntity obj WHERE obj.region = :region AND obj.teamWinner <> :teamWinner") //
 })
 public class TeamsMapEventsEntity {
 	
